@@ -10,8 +10,8 @@
     {
       "name": "codex-mcp-server",
       "source": {
-        "source": "github",
-        "repo": "etheaven/codex-mcp-server"
+        "source": "git",
+        "url": "https://github.com/etheaven/codex-mcp-server.git"
       },
       "description": "MCP server for Codex CLI — use OpenAI Codex (gpt-5.4, gpt-5.3-codex, o3, etc.) directly from Claude Code with model selection, reasoning effort control, and file analysis",
       "version": "1.3.0",
