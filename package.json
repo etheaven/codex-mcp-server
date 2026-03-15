@@ -49,6 +49,8 @@
   },
   "files": [
     "dist/",
+    ".mcp.json",
+    ".claude-plugin/",
     "README.md",
     "LICENSE"
   ],

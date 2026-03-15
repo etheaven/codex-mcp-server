@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "codex": {
+      "command": "npx",
+      "args": ["-y", "@cexll/codex-mcp-server"]
+    }
+  }
+}

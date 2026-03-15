@@ -33,7 +33,16 @@ Before using this tool, ensure you have:
 
 > **✅ Cross-Platform Support**: Fully tested and working on Windows, macOS, and Linux (v1.2.4+)
 
-### One-Line Setup
+### Install via Claude Code Marketplace (Recommended)
+
+In Claude Code, run:
+
+```
+/plugin marketplace add cexll/codex-mcp-server
+/plugin install codex-mcp-server@codex-mcp-server
+```
+
+### Alternative: CLI Setup
 
 ```bash
 claude mcp add codex-cli -- npx -y @cexll/codex-mcp-server
@@ -45,32 +54,11 @@ Type `/mcp` inside Claude Code to verify the Codex MCP is active.
 
 ---
 
-### Alternative: Import from Claude Desktop
-
-If you already have it configured in Claude Desktop:
-
-1. Add to your Claude Desktop config:
-
-```json
-"codex-cli": {
-  "command": "npx",
-  "args": ["-y", "@cexll/codex-mcp-server"]
-}
-```
-
-2. Import to Claude Code:
-
-```bash
-claude mcp add-from-claude-desktop
-```
-
 ## Configuration
 
-Register the MCP server with your MCP client:
+### Claude Desktop
 
-### For NPX Usage (Recommended)
-
-Add this configuration to your Claude Desktop config file:
+Add to your Claude Desktop config file:
 
 ```json
 {
@@ -83,28 +71,20 @@ Add this configuration to your Claude Desktop config file:
 }
 ```
 
-### For Global Installation
+**Config file locations:**
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/claude/claude_desktop_config.json`
 
-If you installed globally, use this configuration instead:
+### Global Installation
 
-```json
-{
-  "mcpServers": {
-    "codex-cli": {
-      "command": "codex-mcp"
-    }
-  }
-}
+```bash
+npm install -g @cexll/codex-mcp-server
 ```
 
-**Configuration File Locations:**
+Then use `"command": "codex-mcp"` instead of the npx approach.
 
-- **Claude Desktop**:
-  - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-  - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-  - **Linux**: `~/.config/claude/claude_desktop_config.json`
-
-After updating the configuration, restart your terminal session.
+After updating configuration, restart your terminal session.
 
 ## Example Workflow
 
