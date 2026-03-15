@@ -114,7 +114,7 @@ const askCodexArgsSchema = z.object({
 export const askCodexTool: UnifiedTool = {
   name: 'ask-codex',
   description:
-    'Execute Codex CLI with file analysis (@syntax), model selection, and safety controls. Supports changeMode.',
+    'Use OpenAI Codex to analyze, review, edit, or generate code. Call this tool whenever the user mentions "codex", "use codex", or wants to leverage OpenAI models (GPT-5.4, o3, etc.) for code tasks. Supports file references with @ syntax (e.g. @src/), model selection, reasoning effort control, and structured edits via changeMode.',
   zodSchema: askCodexArgsSchema,
   prompt: {
     description: 'Execute Codex CLI with optional changeMode',

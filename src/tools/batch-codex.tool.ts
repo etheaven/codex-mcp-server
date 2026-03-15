@@ -43,7 +43,7 @@ const batchCodexArgsSchema = z.object({
 export const batchCodexTool: UnifiedTool = {
   name: 'batch-codex',
   description:
-    'Delegate multiple atomic tasks to Codex for batch processing. Ideal for repetitive operations, mass refactoring, and automated code transformations',
+    'Run multiple tasks through OpenAI Codex in batch. Use when the user wants Codex to handle several tasks sequentially — mass refactoring, bulk code changes, or automated transformations.',
   zodSchema: batchCodexArgsSchema,
   prompt: {
     description: 'Execute multiple atomic Codex tasks in batch mode for efficient automation',

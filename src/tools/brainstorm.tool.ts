@@ -161,7 +161,7 @@ const brainstormArgsSchema = z.object({
 export const brainstormTool: UnifiedTool = {
   name: 'brainstorm',
   description:
-    'Generate creative ideas using structured frameworks with domain context and feasibility analysis.',
+    'Brainstorm ideas using OpenAI Codex with structured frameworks (SCAMPER, design-thinking, lateral, etc.). Use when the user wants creative ideation, brainstorming, or idea generation via Codex.',
   zodSchema: brainstormArgsSchema,
   prompt: {
     description: 'Create structured brainstorming with chosen methodology and analysis',
