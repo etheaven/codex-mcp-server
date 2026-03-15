@@ -108,9 +108,8 @@ const brainstormArgsSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Model ID. Recommended: gpt-5.4 (default), o3 (deep reasoning), gpt-5.3-codex (coding). ' +
-        'All valid IDs: gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5.2-codex, gpt-5.2, gpt-5.1, ' +
-        'gpt-5, gpt-5-mini, gpt-5-nano, o3, o3-pro, o4-mini, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano.'
+      'Model ID. Recommended order: gpt-5.4 (default), gpt-5.3-codex (coding), gpt-5.2-codex, ' +
+        'gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano, gpt-4.1.'
     ),
   reasoningEffort: z
     .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])

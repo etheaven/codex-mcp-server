@@ -8,13 +8,10 @@ import { APPROVAL_POLICIES, ERROR_MESSAGES } from '../constants.js';
 // Model description for AI clients — MUST list exact valid model IDs
 const MODEL_DESCRIPTION = [
   'Model ID to use. IMPORTANT: Use exact IDs listed below, do NOT invent or modify model names.',
-  'Flagship: gpt-5.4 (recommended default), gpt-5.4-pro (high reasoning only).',
-  'Codex (coding): gpt-5.3-codex (best coding), gpt-5.3-codex-spark (instant, Pro only),',
-  '  gpt-5.2-codex, gpt-5.1-codex-max, gpt-5.1-codex, gpt-5-codex, gpt-5-codex-mini.',
-  'General: gpt-5.2, gpt-5.1, gpt-5, gpt-5-pro, gpt-5-mini, gpt-5-nano.',
-  'Reasoning: o3, o3-pro, o4-mini.',
-  'Non-reasoning (1M ctx): gpt-4.1, gpt-4.1-mini, gpt-4.1-nano.',
-  'Legacy: gpt-4o, gpt-4o-mini.',
+  'Recommended (use in this order): gpt-5.4 (default, best), gpt-5.3-codex (best coding),',
+  '  gpt-5.3-codex-spark (instant, Pro only), gpt-5.2-codex, gpt-5.2, gpt-5.1-codex-max,',
+  '  gpt-5.1-codex, gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano.',
+  'Large context (1M): gpt-4.1, gpt-4.1-mini, gpt-4.1-nano.',
 ].join(' ');
 
 const REASONING_DESCRIPTION = [
@@ -114,7 +111,7 @@ const askCodexArgsSchema = z.object({
 export const askCodexTool: UnifiedTool = {
   name: 'ask-codex',
   description:
-    'Use OpenAI Codex to analyze, review, edit, or generate code. Call this tool whenever the user mentions "codex", "use codex", or wants to leverage OpenAI models (GPT-5.4, o3, etc.) for code tasks. Supports file references with @ syntax (e.g. @src/), model selection, reasoning effort control, and structured edits via changeMode.',
+    'Use OpenAI Codex to analyze, review, edit, or generate code. Call this tool whenever the user mentions "codex", "use codex", or wants to leverage OpenAI models (GPT-5.4, GPT-5.3-codex, etc.) for code tasks. Supports file references with @ syntax (e.g. @src/), model selection, reasoning effort control, and structured edits via changeMode.',
   zodSchema: askCodexArgsSchema,
   prompt: {
     description: 'Execute Codex CLI with optional changeMode',

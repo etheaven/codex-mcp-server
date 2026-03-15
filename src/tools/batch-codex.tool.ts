@@ -16,8 +16,8 @@ const batchCodexArgsSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Model ID. Recommended: gpt-5.4 (default), gpt-5.3-codex (coding), o3 (reasoning), o4-mini (fast). ' +
-        'Use exact model IDs as listed.'
+      'Model ID. Recommended order: gpt-5.4 (default), gpt-5.3-codex (coding), gpt-5.2-codex, ' +
+        'gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini.'
     ),
   reasoningEffort: z
     .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
