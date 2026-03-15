@@ -3,17 +3,40 @@ import { UnifiedTool } from './registry.js';
 import { executeCodexCLI, executeCodex } from '../utils/codexExecutor.js';
 import { processChangeModeOutput } from '../utils/changeModeRunner.js';
 import { formatCodexResponseForMCP } from '../utils/outputParser.js';
-import { MODELS, APPROVAL_POLICIES, ERROR_MESSAGES } from '../constants.js';
+import { APPROVAL_POLICIES, ERROR_MESSAGES } from '../constants.js';
+
+// Model description for AI clients — MUST list exact valid model IDs
+const MODEL_DESCRIPTION = [
+  'Model ID to use. IMPORTANT: Use exact IDs listed below, do NOT invent or modify model names.',
+  'Flagship: gpt-5.4 (recommended default), gpt-5.4-pro (high reasoning only).',
+  'Codex (coding): gpt-5.3-codex (best coding), gpt-5.3-codex-spark (instant, Pro only),',
+  '  gpt-5.2-codex, gpt-5.1-codex-max, gpt-5.1-codex, gpt-5-codex, gpt-5-codex-mini.',
+  'General: gpt-5.2, gpt-5.1, gpt-5, gpt-5-pro, gpt-5-mini, gpt-5-nano.',
+  'Reasoning: o3, o3-pro, o4-mini.',
+  'Non-reasoning (1M ctx): gpt-4.1, gpt-4.1-mini, gpt-4.1-nano.',
+  'Legacy: gpt-4o, gpt-4o-mini.',
+].join(' ');
+
+const REASONING_DESCRIPTION = [
+  'Reasoning effort level. Controls depth of internal reasoning.',
+  'Values: none, minimal, low, medium (default), high, xhigh.',
+  'Higher = deeper analysis but slower and more expensive.',
+  'Not all models support all levels.',
+  'gpt-5.4 supports: none/low/medium/high/xhigh.',
+  'gpt-5.3-codex supports: low/medium/high/xhigh.',
+  'o3/o4-mini support: low/medium/high.',
+].join(' ');
 
 const askCodexArgsSchema = z.object({
   prompt: z
     .string()
     .min(1)
     .describe("Task or question. Use @ to include files (e.g., '@largefile.ts explain')."),
-  model: z
-    .string()
+  model: z.string().optional().describe(MODEL_DESCRIPTION),
+  reasoningEffort: z
+    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
     .optional()
-    .describe(`Model: ${Object.values(MODELS).join(', ')}. Default: gpt-5-codex`),
+    .describe(REASONING_DESCRIPTION),
   sandbox: z
     .boolean()
     .default(false)
@@ -101,6 +124,7 @@ export const askCodexTool: UnifiedTool = {
     const {
       prompt,
       model,
+      reasoningEffort,
       sandbox,
       fullAuto,
       approvalPolicy,
@@ -142,6 +166,7 @@ export const askCodexTool: UnifiedTool = {
         prompt as string,
         {
           model: model as string,
+          reasoningEffort: reasoningEffort as string,
           fullAuto: Boolean(fullAuto ?? sandbox),
           approvalPolicy: approvalPolicy as any,
           approval: approval as string,
@@ -225,7 +250,7 @@ npm install -g @openai/codex
           `- sandboxMode: ${sandboxMode}`,
           `- approvalPolicy: ${approvalPolicy}`,
           `- search: ${search}`,
-          `- oss: ${oss}`
+          `- oss: ${oss}`,
         ].join('\n');
 
         return `❌ **Permission Error**: ${ERROR_MESSAGES.SANDBOX_VIOLATION}
@@ -246,7 +271,7 @@ This error typically occurs when:
 {
   "approvalPolicy": "on-failure",
   "sandboxMode": "workspace-write",
-  "model": "gpt-5-codex",
+  "model": "gpt-5.4",
   "prompt": "your task..."
 }
 \`\`\`
@@ -255,7 +280,7 @@ This error typically occurs when:
 \`\`\`json
 {
   "sandbox": true,  // Enables fullAuto (workspace-write + on-failure)
-  "model": "gpt-5-codex",
+  "model": "gpt-5.4",
   "prompt": "your task..."
 }
 \`\`\`
@@ -264,7 +289,7 @@ This error typically occurs when:
 \`\`\`json
 {
   "yolo": true,
-  "model": "gpt-5-codex",
+  "model": "gpt-5.4",
   "prompt": "your task..."
 }
 \`\`\`

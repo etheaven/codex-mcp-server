@@ -23,6 +23,7 @@ export enum SandboxMode {
 
 export interface CodexExecOptions {
   readonly model?: string;
+  readonly reasoningEffort?: string; // none, minimal, low, medium, high, xhigh
   readonly fullAuto?: boolean;
   readonly approvalPolicy?: ApprovalPolicy;
   readonly sandboxMode?: SandboxMode;
@@ -94,6 +95,12 @@ export async function executeCodexCLI(
 
   if (options?.model) {
     args.push(CLI.FLAGS.MODEL, options.model);
+  }
+
+  // Reasoning effort (passed as config override)
+  if (options?.reasoningEffort) {
+    args.push(CLI.FLAGS.CONFIG, `model_reasoning_effort="${options.reasoningEffort}"`);
+    Logger.debug(`Setting reasoning effort: ${options.reasoningEffort}`);
   }
 
   // Resolve working directory using intelligent fallback chain
@@ -210,6 +217,12 @@ export async function executeCodex(
   // Model selection
   if (options?.model) {
     args.push(CLI.FLAGS.MODEL, options.model);
+  }
+
+  // Reasoning effort (passed as config override to Codex CLI)
+  if (options?.reasoningEffort) {
+    args.push(CLI.FLAGS.CONFIG, `model_reasoning_effort="${options.reasoningEffort}"`);
+    Logger.debug(`Setting reasoning effort: ${options.reasoningEffort}`);
   }
 
   // Safety controls

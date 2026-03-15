@@ -108,7 +108,16 @@ const brainstormArgsSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Model: gpt-5-codex (default), gpt-5, o3, o4-mini, codex-1, codex-mini-latest, gpt-4.1'
+      'Model ID. Recommended: gpt-5.4 (default), o3 (deep reasoning), gpt-5.3-codex (coding). ' +
+        'All valid IDs: gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5.2-codex, gpt-5.2, gpt-5.1, ' +
+        'gpt-5, gpt-5-mini, gpt-5-nano, o3, o3-pro, o4-mini, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano.'
+    ),
+  reasoningEffort: z
+    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
+    .optional()
+    .describe(
+      'Reasoning effort: none, minimal, low, medium (default), high, xhigh. ' +
+        'Higher = deeper analysis, slower, more expensive.'
     ),
   approvalPolicy: z
     .enum(['never', 'on-request', 'on-failure', 'untrusted'])
@@ -162,6 +171,7 @@ export const brainstormTool: UnifiedTool = {
     const {
       prompt,
       model,
+      reasoningEffort,
       approvalPolicy,
       sandboxMode,
       fullAuto,
@@ -205,6 +215,7 @@ export const brainstormTool: UnifiedTool = {
       enhancedPrompt,
       {
         model: model as string | undefined,
+        reasoningEffort: reasoningEffort as string | undefined,
         fullAuto: Boolean(fullAuto),
         approvalPolicy: approvalPolicy as any,
         sandboxMode: sandboxMode as any,

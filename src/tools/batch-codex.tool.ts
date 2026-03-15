@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { UnifiedTool } from './registry.js';
 import { executeCodex } from '../utils/codexExecutor.js';
-import { ERROR_MESSAGES, STATUS_MESSAGES, MODELS, SANDBOX_MODES } from '../constants.js';
+import { ERROR_MESSAGES, STATUS_MESSAGES, SANDBOX_MODES } from '../constants.js';
 
 // Define task type for batch operations
 const batchTaskSchema = z.object({
@@ -15,7 +15,14 @@ const batchCodexArgsSchema = z.object({
   model: z
     .string()
     .optional()
-    .describe(`Model to use: ${Object.values(MODELS).join(', ')}`),
+    .describe(
+      'Model ID. Recommended: gpt-5.4 (default), gpt-5.3-codex (coding), o3 (reasoning), o4-mini (fast). ' +
+        'Use exact model IDs as listed.'
+    ),
+  reasoningEffort: z
+    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
+    .optional()
+    .describe('Reasoning effort: none, minimal, low, medium, high, xhigh.'),
   sandbox: z
     .string()
     .default(SANDBOX_MODES.WORKSPACE_WRITE)
@@ -46,6 +53,7 @@ export const batchCodexTool: UnifiedTool = {
     const {
       tasks,
       model,
+      reasoningEffort,
       sandbox,
       parallel,
       stopOnError,
@@ -113,6 +121,7 @@ export const batchCodexTool: UnifiedTool = {
           taskPrompt,
           {
             model: model as string,
+            reasoningEffort: reasoningEffort as string,
             sandboxMode: sandbox as any,
             timeout: timeout as number,
             workingDir: workingDir as string,

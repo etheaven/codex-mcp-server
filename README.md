@@ -12,7 +12,7 @@
 
 Codex MCP Tool is an open‑source Model Context Protocol (MCP) server that connects your IDE or AI assistant (Claude, Cursor, etc.) to the Codex CLI. It enables non‑interactive automation with `codex exec`, safe sandboxed edits with approvals, and large‑scale code analysis via `@` file references. Built for reliability and speed, it streams progress updates, supports structured change mode (OLD/NEW patch output), and integrates cleanly with standard MCP clients for code review, refactoring, documentation, and CI automation.
 
-> **Latest Release (v1.2.4)**: Enhanced Windows compatibility - Now using cross-spawn for reliable npm global command execution across all platforms (Windows, macOS, Linux). [See changelog](#recent-updates)
+> **Latest Release (v1.3.0)**: Updated model support — all GPT-5.x series (gpt-5.4, gpt-5.3-codex, etc.), reasoning effort control, and accurate model descriptions for AI clients. [See changelog](#recent-updates)
 
 - Ask Codex questions from your MCP client, or brainstorm ideas programmatically.
 
@@ -116,20 +116,23 @@ After updating the configuration, restart your terminal session.
 ### Model Selection
 
 ```javascript
-// Use the default gpt-5-codex model
+// Use the default model (gpt-5.4)
 'explain the architecture of @src/';
 
-// Use gpt-5 for fast general purpose reasoning
-'use codex with model gpt-5 to analyze @config.json';
+// Use gpt-5.3-codex for complex coding tasks
+'use codex with model gpt-5.3-codex to refactor @legacy-code.js';
 
-// Use o3 for deep reasoning tasks
-'use codex with model o3 to analyze complex algorithm in @algorithm.py';
+// Use gpt-5.4 with high reasoning for deep analysis
+'use codex with model gpt-5.4 and reasoning high to analyze complex algorithm in @algorithm.py';
 
 // Use o4-mini for quick tasks
 'use codex with model o4-mini to add comments to @utils.js';
 
-// Use codex-1 for software engineering
-'use codex with model codex-1 to refactor @legacy-code.js';
+// Use o3 for deep reasoning
+'use codex with model o3 to design microservices architecture for @requirements.md';
+
+// Use gpt-5-mini for cost-effective tasks
+'use codex with model gpt-5-mini to summarize @README.md';
 ```
 
 ### With File References (using @ syntax)
@@ -193,7 +196,7 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 {
   "approvalPolicy": "on-failure",
   "sandboxMode": "workspace-write",  // Auto-set if omitted in v1.2+
-  "model": "gpt-5-codex",
+  "model": "gpt-5.4",
   "prompt": "refactor @src/utils for better performance"
 }
 ```
@@ -203,7 +206,7 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 ```javascript
 {
   "sandbox": true,  // Equivalent to fullAuto: true
-  "model": "gpt-5-codex",
+  "model": "gpt-5.4",
   "prompt": "fix type errors in @src/"
 }
 ```
@@ -213,7 +216,7 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 ```javascript
 {
   "sandboxMode": "read-only",
-  "model": "gpt-5-codex",
+  "model": "gpt-5.4",
   "prompt": "analyze @src/ and explain the architecture"
 }
 ```
@@ -284,7 +287,7 @@ Create or edit `~/.codex/config.toml`:
 
 ```toml
 # Dynamically generated Codex configuration
-model = "gpt-5-codex"
+model = "gpt-5.4"
 model_reasoning_effort = "high"
 model_reasoning_summary = "detailed"
 approval_policy = "never"
@@ -314,8 +317,8 @@ After updating the configuration, restart your MCP client (Claude Desktop, Claud
 ### Advanced Examples
 
 ```javascript
-// Using ask-codex with specific model
-'ask codex using gpt-5 to refactor @utils/database.js for better performance';
+// Using ask-codex with specific model and reasoning effort
+'ask codex using gpt-5.3-codex with reasoning high to refactor @utils/database.js for better performance';
 
 // Brainstorming with constraints
 "brainstorm solutions for reducing API latency with constraints: 'must use existing infrastructure, budget under $5k'";
@@ -332,14 +335,16 @@ These tools are designed to be used by the AI assistant.
 
 - **`ask-codex`**: Sends a prompt to Codex via `codex exec`.
   - Supports `@` file references for including file content
-  - Optional `model` parameter - available models:
-    - `gpt-5-codex` (default, optimized for coding)
-    - `gpt-5` (general purpose, fast reasoning)
-    - `o3` (smartest, deep reasoning)
+  - Optional `model` parameter — recommended models:
+    - `gpt-5.4` (default, latest flagship)
+    - `gpt-5.3-codex` (best for complex coding)
+    - `gpt-5.3-codex-spark` (instant coding, Pro only)
+    - `o3` (deep reasoning)
     - `o4-mini` (fast & efficient)
-    - `codex-1` (o3-based for software engineering)
-    - `codex-mini-latest` (low-latency code Q&A)
-    - `gpt-4.1` (also available)
+    - `gpt-5-mini` (cost-effective)
+    - `gpt-4.1` (1M context, no reasoning)
+    - See [full model list](docs/concepts/models.md)
+  - Optional `reasoningEffort` parameter: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`
   - `sandbox=true` enables `--full-auto` mode
   - `changeMode=true` returns structured OLD/NEW edits
   - Supports approval policies and sandbox modes
@@ -348,7 +353,7 @@ These tools are designed to be used by the AI assistant.
 - **`brainstorm`**: Generate novel ideas with structured methodologies.
   - Multiple frameworks: divergent, convergent, SCAMPER, design-thinking, lateral
   - Domain-specific context (software, business, creative, research, product, marketing)
-  - Supports same models as `ask-codex` (default: `gpt-5-codex`)
+  - Supports same models and `reasoningEffort` as `ask-codex`
   - Configurable idea count and analysis depth
   - Includes feasibility, impact, and innovation scoring
   - Example: `brainstorm prompt:"ways to improve code review process" domain:"software" methodology:"scamper"`
@@ -382,6 +387,16 @@ You can use these commands directly in Claude Code's interface (compatibility wi
   - **`message`** (optional): A message to echo back.
 
 ## Recent Updates
+
+### v1.3.0 (2026-03-15)
+
+**Model Support Overhaul:**
+- **Updated model list** to March 2026: added gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5.3-codex-spark, gpt-5.2-codex, gpt-5.2, gpt-5.1-codex-max, gpt-5.1-codex, gpt-5.1, gpt-5-pro, gpt-5-mini, gpt-5-nano, o3-pro, gpt-4.1-mini, gpt-4.1-nano
+- **Removed deprecated models**: `codex-1` and `codex-mini-latest` (never existed in OpenAI API)
+- **New `reasoningEffort` parameter** for ask-codex, brainstorm, and batch-codex tools — supports `none`, `minimal`, `low`, `medium`, `high`, `xhigh`
+- **Improved tool schema descriptions** with exact valid model IDs to prevent AI clients from inventing model names
+- **Updated default model** recommendation from `gpt-5-codex` to `gpt-5.4`
+- **Comprehensive model documentation** rewrite with per-model reasoning effort support tables
 
 ### v1.2.4 (2025-10-27)
 

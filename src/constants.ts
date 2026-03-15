@@ -24,16 +24,60 @@ export const STATUS_MESSAGES = {
   PROCESSING_COMPLETE: '✅ Analysis completed successfully',
 } as const;
 
-// Models
+// Models — kept in sync with https://developers.openai.com/codex/models/
+// and https://developers.openai.com/api/docs/models  (March 2026)
 export const MODELS = {
-  GPT5_CODEX: 'gpt-5-codex',
-  GPT5: 'gpt-5',
+  // GPT-5.x flagship / reasoning
+  GPT_5_4: 'gpt-5.4',
+  GPT_5_4_PRO: 'gpt-5.4-pro',
+  GPT_5_3_CODEX: 'gpt-5.3-codex',
+  GPT_5_3_CODEX_SPARK: 'gpt-5.3-codex-spark',
+  GPT_5_2_CODEX: 'gpt-5.2-codex',
+  GPT_5_2: 'gpt-5.2',
+  GPT_5_1_CODEX_MAX: 'gpt-5.1-codex-max',
+  GPT_5_1_CODEX: 'gpt-5.1-codex',
+  GPT_5_1: 'gpt-5.1',
+  GPT_5: 'gpt-5',
+  GPT_5_PRO: 'gpt-5-pro',
+  GPT_5_CODEX: 'gpt-5-codex',
+  GPT_5_CODEX_MINI: 'gpt-5-codex-mini',
+  GPT_5_MINI: 'gpt-5-mini',
+  GPT_5_NANO: 'gpt-5-nano',
+  // O-series reasoning
   O3: 'o3',
+  O3_PRO: 'o3-pro',
   O4_MINI: 'o4-mini',
-  CODEX_1: 'codex-1',
-  CODEX_MINI_LATEST: 'codex-mini-latest',
+  // GPT-4.1 (non-reasoning, 1M context)
   GPT_4_1: 'gpt-4.1',
+  GPT_4_1_MINI: 'gpt-4.1-mini',
+  GPT_4_1_NANO: 'gpt-4.1-nano',
+  // GPT-4o (legacy multimodal)
+  GPT_4O: 'gpt-4o',
+  GPT_4O_MINI: 'gpt-4o-mini',
 } as const;
+
+// Recommended models for different use cases (used in tool descriptions)
+export const MODEL_RECOMMENDATIONS = {
+  DEFAULT: 'gpt-5.4',
+  CODING: 'gpt-5.3-codex',
+  FAST_CODING: 'gpt-5.3-codex-spark',
+  DEEP_REASONING: 'o3',
+  FAST_REASONING: 'o4-mini',
+  COST_EFFECTIVE: 'gpt-5-mini',
+  LARGE_CONTEXT: 'gpt-4.1',
+} as const;
+
+// Reasoning effort levels — per-model support varies
+export const REASONING_EFFORTS = {
+  NONE: 'none',
+  MINIMAL: 'minimal',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  XHIGH: 'xhigh',
+} as const;
+
+export type ReasoningEffort = (typeof REASONING_EFFORTS)[keyof typeof REASONING_EFFORTS];
 
 // Sandbox modes
 export const SANDBOX_MODES = {
@@ -137,6 +181,9 @@ export interface ToolArguments {
   chunkIndex?: number | string; // Which chunk to return (1-based)
   chunkCacheKey?: string; // Optional cache key for continuation
   message?: string; // For Ping tool -- Un-used.
+
+  // Reasoning control
+  reasoningEffort?: string; // none, minimal, low, medium, high, xhigh
 
   // New parameters from resource implementation
   image?: string | string[]; // Image file path(s) to include
