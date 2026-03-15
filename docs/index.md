@@ -11,7 +11,7 @@ hero:
       link: /getting-started
     - theme: alt
       text: Leave a Star ⭐
-      link: https://github.com/x51xxx/codex-mcp-tool
+      link: https://github.com/etheaven/codex-mcp-server
 
 features:
   - icon: 📂
@@ -85,7 +85,7 @@ Codex MCP Tool is a Model Context Protocol (MCP) server that bridges the gap bet
 
 ```bash
 # One-command installation
-claude mcp add codex-cli -- npx -y codex-mcp-tool codex-mcp
+claude mcp add codex-cli -- npx -y codex-mcp-server codex-mcp
 
 # Verify installation
 /mcp
@@ -100,7 +100,7 @@ Add to your configuration file:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "codex-mcp-tool", "codex-mcp"]
+      "args": ["-y", "codex-mcp-server", "codex-mcp"]
     }
   }
 }
@@ -141,9 +141,9 @@ Once installed, you can use natural language or slash commands:
 
 </div>
 
-- **GitHub**: [x51xxx/codex-mcp-tool](https://github.com/x51xxx/codex-mcp-tool)
-- **Issues**: [Report bugs or request features](https://github.com/x51xxx/codex-mcp-tool/issues)
-- **Discussions**: [Join the conversation](https://github.com/x51xxx/codex-mcp-tool/discussions)
+- **GitHub**: [etheaven/codex-mcp-server](https://github.com/etheaven/codex-mcp-server)
+- **Issues**: [Report bugs or request features](https://github.com/etheaven/codex-mcp-server/issues)
+- **Discussions**: [Join the conversation](https://github.com/etheaven/codex-mcp-server/discussions)
 
 ## Acknowledgments
 
@@ -155,6 +155,6 @@ This project was inspired by the excellent work from [jamubc/gemini-mcp-tool](ht
 
 </div>
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/x51xxx/codex-mcp-tool/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/etheaven/codex-mcp-server/blob/main/LICENSE) file for details.
 
 **Disclaimer:** This is an unofficial, third-party tool and is not affiliated with, endorsed, or sponsored by OpenAI.

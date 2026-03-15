@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "codex-mcp-tool": {
+    "codex-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"]
+      "args": ["-y", "@etheaven/codex-mcp-server"]
     }
   }
 }

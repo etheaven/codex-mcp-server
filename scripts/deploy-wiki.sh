@@ -7,8 +7,8 @@ set -e
 echo "🚀 Deploying Wiki to GitHub..."
 
 # Configuration
-REPO_OWNER="x51xxx"
-REPO_NAME="codex-mcp-tool"
+REPO_OWNER="etheaven"
+REPO_NAME="codex-mcp-server"
 WIKI_REPO="https://github.com/${REPO_OWNER}/${REPO_NAME}.wiki.git"
 TEMP_DIR=".wiki-temp"
 
@@ -21,7 +21,7 @@ fi
 
 # Check if we're in the right directory
 if [ ! -f "package.json" ] || [ ! -d "docs" ]; then
-    echo "❌ Not in the project root directory. Please run from the root of codex-mcp-tool."
+    echo "❌ Not in the project root directory. Please run from the root of codex-mcp-server."
     exit 1
 fi
 
@@ -94,9 +94,9 @@ Codex MCP Tool is a Model Context Protocol (MCP) server that enables seamless in
 
 ## Support
 
-- [GitHub Issues](https://github.com/x51xxx/codex-mcp-tool/issues)
-- [Documentation](https://x51xxx.github.io/codex-mcp-tool/)
-- [NPM Package](https://www.npmjs.com/package/@cexll/codex-mcp-server)
+- [GitHub Issues](https://github.com/etheaven/codex-mcp-server/issues)
+- [Documentation](https://etheaven.github.io/codex-mcp-server/)
+- [NPM Package](https://www.npmjs.com/package/@etheaven/codex-mcp-server)
 EOF
 
 # Getting Started page
@@ -116,7 +116,7 @@ Before installing, ensure you have:
 ### For Claude Code (Recommended)
 
 ```bash
-claude mcp add codex-cli -- npx -y @cexll/codex-mcp-server
+claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
 ```
 
 ### For Claude Desktop
@@ -128,7 +128,7 @@ Add to your configuration file:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"]
+      "args": ["-y", "@etheaven/codex-mcp-server"]
     }
   }
 }
@@ -315,7 +315,7 @@ cat > Troubleshooting.md << 'EOF'
 1. Check configuration file syntax
 2. Restart your MCP client
 3. Run diagnostics: `claude code --> /doctor`
-4. Verify npm package: `npm list -g @cexll/codex-mcp-server`
+4. Verify npm package: `npm list -g @etheaven/codex-mcp-server`
 
 ### "Permission denied" errors
 - Check sandbox mode settings
@@ -341,9 +341,9 @@ DEBUG=codex-mcp:* npm start
 
 ## Getting Help
 
-1. Check [GitHub Issues](https://github.com/x51xxx/codex-mcp-tool/issues)
-2. Review [Documentation](https://x51xxx.github.io/codex-mcp-tool/)
-3. Ask in [Discussions](https://github.com/x51xxx/codex-mcp-tool/discussions)
+1. Check [GitHub Issues](https://github.com/etheaven/codex-mcp-server/issues)
+2. Review [Documentation](https://etheaven.github.io/codex-mcp-server/)
+3. Ask in [Discussions](https://github.com/etheaven/codex-mcp-server/discussions)
 EOF
 
 # Model Selection page
@@ -367,19 +367,19 @@ cat > _Sidebar.md << 'EOF'
 * [[Troubleshooting]]
 
 **Links**
-* [📦 NPM Package](https://www.npmjs.com/package/@cexll/codex-mcp-server)
-* [🐙 GitHub Repo](https://github.com/x51xxx/codex-mcp-tool)
-* [📋 Issues](https://github.com/x51xxx/codex-mcp-tool/issues)
-* [📖 Docs](https://x51xxx.github.io/codex-mcp-tool/)
+* [📦 NPM Package](https://www.npmjs.com/package/@etheaven/codex-mcp-server)
+* [🐙 GitHub Repo](https://github.com/etheaven/codex-mcp-server)
+* [📋 Issues](https://github.com/etheaven/codex-mcp-server/issues)
+* [📖 Docs](https://etheaven.github.io/codex-mcp-server/)
 EOF
 
 # Create footer
 cat > _Footer.md << 'EOF'
 ---
-📄 [MIT License](https://github.com/x51xxx/codex-mcp-tool/blob/main/LICENSE) |
-🔧 [Contribute](https://github.com/x51xxx/codex-mcp-tool) |
-📦 [NPM](https://www.npmjs.com/package/@cexll/codex-mcp-server) |
-⭐ [Star on GitHub](https://github.com/x51xxx/codex-mcp-tool)
+📄 [MIT License](https://github.com/etheaven/codex-mcp-server/blob/main/LICENSE) |
+🔧 [Contribute](https://github.com/etheaven/codex-mcp-server) |
+📦 [NPM](https://www.npmjs.com/package/@etheaven/codex-mcp-server) |
+⭐ [Star on GitHub](https://github.com/etheaven/codex-mcp-server)
 EOF
 
 # Commit and push

@@ -21,7 +21,7 @@ No installation needed - runs directly:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"]
+      "args": ["-y", "@etheaven/codex-mcp-server"]
     }
   }
 }
@@ -30,7 +30,7 @@ No installation needed - runs directly:
 ### Claude Code Configuration
 
 ```bash
-claude mcp add codex-cli --npm-package @cexll/codex-mcp-server
+claude mcp add codex-cli --npm-package @etheaven/codex-mcp-server
 ```
 
 ## Method 2: Global Installation
@@ -38,7 +38,7 @@ claude mcp add codex-cli --npm-package @cexll/codex-mcp-server
 ### Install globally
 
 ```bash
-npm install -g @cexll/codex-mcp-server
+npm install -g @etheaven/codex-mcp-server
 ```
 
 ### Claude Desktop Configuration
@@ -65,8 +65,8 @@ For development or local testing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/x51xxx/codex-mcp-tool.git
-cd codex-mcp-tool
+git clone https://github.com/etheaven/codex-mcp-server.git
+cd codex-mcp-server
 
 # Install dependencies
 npm install
@@ -85,7 +85,7 @@ node dist/index.js
   "mcpServers": {
     "codex-dev": {
       "command": "node",
-      "args": ["/path/to/codex-mcp-tool/dist/index.js"]
+      "args": ["/path/to/codex-mcp-server/dist/index.js"]
     }
   }
 }
@@ -123,8 +123,8 @@ Need help with installation or setup? I'm here to assist:
 
 ### 🤝 Get Help
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/x51xxx/codex-mcp-tool/issues)
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/x51xxx/codex-mcp-tool/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/etheaven/codex-mcp-server/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/etheaven/codex-mcp-server/discussions)
 - **Email**: [taras@trishchuk.com](mailto:taras@trishchuk.com) for direct support
 
 ### 📖 Documentation
@@ -135,8 +135,8 @@ Need help with installation or setup? I'm here to assist:
 
 ### 🚀 Contributing
 
-Interested in contributing? Check out our [Contributing Guide](https://github.com/x51xxx/codex-mcp-tool/blob/main/CONTRIBUTING.md) or reach out directly!
+Interested in contributing? Check out our [Contributing Guide](https://github.com/etheaven/codex-mcp-server/blob/main/CONTRIBUTING.md) or reach out directly!
 
 ---
 
-**Developed by [Taras Trishchuk](https://github.com/x51xxx)** | Licensed under MIT
+**Developed by [Taras Trishchuk](https://github.com/etheaven)** | Licensed under MIT

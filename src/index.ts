@@ -281,10 +281,10 @@ server.setRequestHandler(
 
 // Start the server
 async function main() {
-  Logger.debug('init codex-mcp-tool');
+  Logger.debug('init codex-mcp-server');
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  Logger.debug('codex-mcp-tool listening on stdio');
+  Logger.debug('codex-mcp-server listening on stdio');
 }
 
 main().catch(error => {

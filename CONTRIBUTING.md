@@ -10,7 +10,7 @@ Please be respectful and constructive in all interactions. We aim to maintain a 
 
 ### Reporting Bugs
 
-1. Check [existing issues](https://github.com/x51xxx/codex-mcp-tool/issues) to avoid duplicates
+1. Check [existing issues](https://github.com/etheaven/codex-mcp-server/issues) to avoid duplicates
 2. Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
 3. Include:
    - Clear description of the issue
@@ -21,7 +21,7 @@ Please be respectful and constructive in all interactions. We aim to maintain a 
 
 ### Suggesting Features
 
-1. Check [existing feature requests](https://github.com/x51xxx/codex-mcp-tool/issues?q=is%3Aissue+label%3Aenhancement)
+1. Check [existing feature requests](https://github.com/etheaven/codex-mcp-server/issues?q=is%3Aissue+label%3Aenhancement)
 2. Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
 3. Explain the problem your feature solves
 4. Provide use cases and examples
@@ -47,8 +47,8 @@ Please be respectful and constructive in all interactions. We aim to maintain a 
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/codex-mcp-tool.git
-cd codex-mcp-tool
+git clone https://github.com/YOUR_USERNAME/codex-mcp-server.git
+cd codex-mcp-server
 
 # Install dependencies
 npm install
@@ -73,7 +73,7 @@ npm run build
 npm link
 
 # Add to Claude Code
-claude mcp add codex-dev --npm-package @cexll/codex-mcp-server
+claude mcp add codex-dev --npm-package @etheaven/codex-mcp-server
 ```
 
 #### Claude Desktop
@@ -85,7 +85,7 @@ Add to your configuration:
   "mcpServers": {
     "codex-dev": {
       "command": "node",
-      "args": ["/path/to/your/codex-mcp-tool/dist/index.js"]
+      "args": ["/path/to/your/codex-mcp-server/dist/index.js"]
     }
   }
 }
@@ -298,13 +298,13 @@ The CI/CD pipeline will:
 
 - Run tests and linting
 - Build the project
-- Publish to npm as `@cexll/codex-mcp-server`
+- Publish to npm as `@etheaven/codex-mcp-server`
 - Create GitHub release
 
 ## Getting Help
 
-- Check [documentation](https://x51xxx.github.io/codex-mcp-tool/)
-- Ask in [GitHub Discussions](https://github.com/x51xxx/codex-mcp-tool/discussions)
+- Check [documentation](https://etheaven.github.io/codex-mcp-server/)
+- Ask in [GitHub Discussions](https://github.com/etheaven/codex-mcp-server/discussions)
 - Join our community chat (if available)
 
 ## License

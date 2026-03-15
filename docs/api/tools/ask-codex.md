@@ -362,7 +362,7 @@ For consistent file resolution:
 // Node.js integration
 const { execSync } = require('child_process');
 
-const result = execSync('npx @cexll/codex-mcp-server', {
+const result = execSync('npx @etheaven/codex-mcp-server', {
   input: JSON.stringify({
     method: 'tools/call',
     params: {

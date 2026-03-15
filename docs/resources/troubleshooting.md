@@ -14,7 +14,7 @@ codex --version
 node --version
 
 # Check npm installation
-npm list -g @cexll/codex-mcp-server
+npm list -g @etheaven/codex-mcp-server
 
 # Test MCP connection (in Claude)
 /codex-cli:ping "test"
@@ -41,7 +41,7 @@ npm install -g codex-cli
 codex --version
 ```
 
-#### "Cannot find module '@cexll/codex-mcp-server'"
+#### "Cannot find module '@etheaven/codex-mcp-server'"
 
 **Problem:** The MCP tool is not installed correctly.
 
@@ -49,13 +49,13 @@ codex --version
 
 ```bash
 # For Claude Code
-claude mcp add codex-cli -- npx -y @cexll/codex-mcp-server
+claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
 
 # For global installation
-npm install -g @cexll/codex-mcp-server
+npm install -g @etheaven/codex-mcp-server
 
 # Verify installation
-npm list -g @cexll/codex-mcp-server
+npm list -g @etheaven/codex-mcp-server
 ```
 
 ### Connection Issues
@@ -73,7 +73,7 @@ npm list -g @cexll/codex-mcp-server
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"]
+      "args": ["-y", "@etheaven/codex-mcp-server"]
     }
   }
 }
@@ -88,7 +88,7 @@ npm list -g @cexll/codex-mcp-server
 
 ```bash
 # Enable debug mode
-DEBUG=codex-mcp:* npx @cexll/codex-mcp-server
+DEBUG=codex-mcp:* npx @etheaven/codex-mcp-server
 ```
 
 #### "Authentication failed"
@@ -253,7 +253,7 @@ xcode-select --install
 
 ```bash
 # Fix npm permissions
-sudo npm install -g @cexll/codex-mcp-server --unsafe-perm
+sudo npm install -g @etheaven/codex-mcp-server --unsafe-perm
 ```
 
 ### Windows
@@ -292,7 +292,7 @@ npm config get prefix
 
 ```bash
 npm list -g codex-cli
-npm list -g @cexll/codex-mcp-server
+npm list -g @etheaven/codex-mcp-server
 ```
 
 #### "EPERM: operation not permitted"
@@ -332,12 +332,12 @@ Enable detailed logging for troubleshooting:
 
 ```bash
 # Enable all debug output
-DEBUG=* npx @cexll/codex-mcp-server
+DEBUG=* npx @etheaven/codex-mcp-server
 
 # Enable specific modules
-DEBUG=codex-mcp:* npx @cexll/codex-mcp-server
-DEBUG=codex-mcp:executor npx @cexll/codex-mcp-server
-DEBUG=codex-mcp:parser npx @cexll/codex-mcp-server
+DEBUG=codex-mcp:* npx @etheaven/codex-mcp-server
+DEBUG=codex-mcp:executor npx @etheaven/codex-mcp-server
+DEBUG=codex-mcp:parser npx @etheaven/codex-mcp-server
 ```
 
 ### Logging Levels
@@ -411,7 +411,7 @@ npm --version
 codex --version
 
 # Package information
-npm list -g @cexll/codex-mcp-server
+npm list -g @etheaven/codex-mcp-server
 
 # Error logs
 cat ~/.codex/logs/error.log
@@ -422,9 +422,9 @@ claude --version  # For Claude Code
 
 ### Support Channels
 
-1. **GitHub Issues:** [Report bugs](https://github.com/x51xxx/codex-mcp-tool/issues)
-2. **Discussions:** [Ask questions](https://github.com/x51xxx/codex-mcp-tool/discussions)
-3. **Documentation:** [Read docs](https://x51xxx.github.io/codex-mcp-tool/)
+1. **GitHub Issues:** [Report bugs](https://github.com/etheaven/codex-mcp-server/issues)
+2. **Discussions:** [Ask questions](https://github.com/etheaven/codex-mcp-server/discussions)
+3. **Documentation:** [Read docs](https://etheaven.github.io/codex-mcp-server/)
 
 ### Creating Bug Reports
 

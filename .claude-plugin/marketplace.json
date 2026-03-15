@@ -11,14 +11,14 @@
       "name": "codex-mcp-server",
       "source": {
         "source": "github",
-        "repo": "cexll/codex-mcp-server"
+        "repo": "etheaven/codex-mcp-server"
       },
       "description": "MCP server for Codex CLI — use OpenAI Codex (gpt-5.4, gpt-5.3-codex, o3, etc.) directly from Claude Code with model selection, reasoning effort control, and file analysis",
       "version": "1.3.0",
       "author": {
         "name": "Taras Trishchuk"
       },
-      "homepage": "https://github.com/cexll/codex-mcp-server",
+      "homepage": "https://github.com/etheaven/codex-mcp-server",
       "license": "MIT",
       "keywords": ["mcp", "codex", "openai", "cli", "gpt-5"]
     }

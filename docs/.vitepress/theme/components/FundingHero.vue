@@ -23,7 +23,7 @@
       
       <div class="hero-actions">
         <a 
-          href="https://github.com/sponsors/x51xxx" 
+          href="https://github.com/sponsors/etheaven" 
           target="_blank"
           rel="noopener"
           class="action-button action-primary"
@@ -35,7 +35,7 @@
         </a>
 
         <a 
-          href="https://github.com/x51xxx/codex-mcp-tool" 
+          href="https://github.com/etheaven/codex-mcp-server" 
           target="_blank"
           rel="noopener"
           class="action-button action-primary"

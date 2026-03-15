@@ -11,11 +11,11 @@
         <div class="support-text">
           <h3 class="support-title">Support Codex MCP Tool</h3>
           <p class="support-description">
-            Does codex-mcp-tool help you?<br><br>Your support helps maintain & improve this open source project.
+            Does codex-mcp-server help you?<br><br>Your support helps maintain & improve this open source project.
           </p>
         </div>
         <a 
-          href="/codex-mcp-tool/funding" 
+          href="/codex-mcp-server/funding" 
           class="transparency-link"
           @mouseenter="handleMouseEnter"
           @mousemove="handleMouseMove"
@@ -28,7 +28,7 @@
       
       <div class="support-options">
         <a 
-          href="https://github.com/sponsors/x51xxx"
+          href="https://github.com/sponsors/etheaven"
           target="_blank" 
           rel="noopener"
           class="support-button support-button--primary"

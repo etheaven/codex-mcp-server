@@ -5,8 +5,8 @@
   "author": {
     "name": "Taras Trishchuk"
   },
-  "homepage": "https://github.com/cexll/codex-mcp-server",
-  "repository": "https://github.com/cexll/codex-mcp-server",
+  "homepage": "https://github.com/etheaven/codex-mcp-server",
+  "repository": "https://github.com/etheaven/codex-mcp-server",
   "license": "MIT",
   "keywords": ["mcp", "codex", "openai", "cli", "code-generation", "ai", "gpt-5"],
   "mcpServers": "../.mcp.json"

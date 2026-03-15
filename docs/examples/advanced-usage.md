@@ -207,7 +207,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Codex MCP
-        run: npm install -g @cexll/codex-mcp-server
+        run: npm install -g @etheaven/codex-mcp-server
 
       - name: Security Review
         run: |
@@ -221,7 +221,7 @@ jobs:
                 "sandboxMode": "read-only"
               }
             }
-          }' | npx @cexll/codex-mcp-server
+          }' | npx @etheaven/codex-mcp-server
 
       - name: Performance Review
         run: |
@@ -234,7 +234,7 @@ jobs:
                 "model": "o3"
               }
             }
-          }' | npx @cexll/codex-mcp-server
+          }' | npx @etheaven/codex-mcp-server
 ```
 
 ### Scheduled Maintenance

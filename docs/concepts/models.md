@@ -162,7 +162,7 @@ model_context_window = 1000000
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"],
+      "args": ["-y", "@etheaven/codex-mcp-server"],
       "env": {
         "CODEX_MCP_CWD": "/path/to/work"
       }

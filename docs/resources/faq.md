@@ -43,13 +43,13 @@ No, this is a community-developed integration tool. It uses the official Codex C
 **For Claude Code (recommended):**
 
 ```bash
-claude mcp add codex-cli -- npx -y @cexll/codex-mcp-server
+claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
 ```
 
 **For Claude Desktop:**
 
 ```bash
-npm install -g @cexll/codex-mcp-server
+npm install -g @etheaven/codex-mcp-server
 ```
 
 Then add to your configuration file.
@@ -248,10 +248,10 @@ Check:
 
 ```bash
 # Enable all debug output
-DEBUG=* npx @cexll/codex-mcp-server
+DEBUG=* npx @etheaven/codex-mcp-server
 
 # Enable specific modules
-DEBUG=codex-mcp:* npx @cexll/codex-mcp-server
+DEBUG=codex-mcp:* npx @etheaven/codex-mcp-server
 ```
 
 ### What if I get "model not available"?
@@ -263,9 +263,9 @@ DEBUG=codex-mcp:* npx @cexll/codex-mcp-server
 
 ### How do I report bugs?
 
-1. Check [existing issues](https://github.com/x51xxx/codex-mcp-tool/issues)
+1. Check [existing issues](https://github.com/etheaven/codex-mcp-server/issues)
 2. Gather diagnostic information
-3. Use the [bug report template](https://github.com/x51xxx/codex-mcp-tool/issues/new?template=bug_report.md)
+3. Use the [bug report template](https://github.com/etheaven/codex-mcp-server/issues/new?template=bug_report.md)
 4. Include reproducible steps
 
 ## Advanced Topics
@@ -285,7 +285,7 @@ Yes, configure multiple servers in your MCP client:
 
 ### How do I contribute to the project?
 
-See our [Contributing Guide](https://github.com/x51xxx/codex-mcp-tool/blob/main/CONTRIBUTING.md):
+See our [Contributing Guide](https://github.com/etheaven/codex-mcp-server/blob/main/CONTRIBUTING.md):
 
 1. Fork the repository
 2. Create a feature branch
@@ -350,13 +350,13 @@ cost = (tokens / 1000) * model_price_per_1k;
 
 ### How do I request features?
 
-1. Check [existing requests](https://github.com/x51xxx/codex-mcp-tool/issues?label=enhancement)
-2. Use the [feature request template](https://github.com/x51xxx/codex-mcp-tool/issues/new?template=feature_request.md)
+1. Check [existing requests](https://github.com/etheaven/codex-mcp-server/issues?label=enhancement)
+2. Use the [feature request template](https://github.com/etheaven/codex-mcp-server/issues/new?template=feature_request.md)
 3. Provide use cases and examples
 
 ### Is there a roadmap?
 
-Check our [GitHub Projects](https://github.com/x51xxx/codex-mcp-tool/projects) for planned features and progress.
+Check our [GitHub Projects](https://github.com/etheaven/codex-mcp-server/projects) for planned features and progress.
 
 ## Related Resources
 
@@ -364,4 +364,4 @@ Check our [GitHub Projects](https://github.com/x51xxx/codex-mcp-tool/projects) f
 - [Troubleshooting Guide](./troubleshooting.md)
 - [API Reference](../api/tools/ask-codex.md)
 - [Examples](../examples/basic-usage.md)
-- [Contributing](https://github.com/x51xxx/codex-mcp-tool/blob/main/CONTRIBUTING.md)
+- [Contributing](https://github.com/etheaven/codex-mcp-server/blob/main/CONTRIBUTING.md)

@@ -37,13 +37,13 @@ Before installing, ensure you have:
 
 ## Claude Code (Recommended)
 
-::: warning 💡 @cexll/codex-mcp-server is tested extensively with Claude Code
+::: warning 💡 @etheaven/codex-mcp-server is tested extensively with Claude Code
 :::
 Claude Code offers the smoothest experience.
 
 ```bash
 # install for Claude Code
-claude mcp add codex-cli -- npx -y @cexll/codex-mcp-server
+claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
 
 # Start Claude Code - it's automatically configured!
 claude
@@ -74,7 +74,7 @@ For Claude Desktop users, add this to your configuration file:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@cexll/codex-mcp-server"]
+      "args": ["-y", "@etheaven/codex-mcp-server"]
     }
   }
 }
@@ -95,7 +95,7 @@ Codex MCP Tool works with 40+ MCP clients! Here are the common configuration pat
   "transport": {
     "type": "stdio",
     "command": "npx",
-    "args": ["-y", "@cexll/codex-mcp-server"]
+    "args": ["-y", "@etheaven/codex-mcp-server"]
   }
 }
 ```
@@ -111,7 +111,7 @@ Codex MCP Tool works with 40+ MCP clients! Here are the common configuration pat
 {
   "codex-cli": {
     "command": "npx",
-    "args": ["-y", "@cexll/codex-mcp-server"],
+    "args": ["-y", "@etheaven/codex-mcp-server"],
     "env": {},
     "working_directory": null,
     "start_on_launch": true
@@ -222,5 +222,5 @@ Now that you're set up:
 - Join the community for support
 
 ::: info Need Help?
-If you run into issues, [open an issue](https://github.com/x51xxx/codex-mcp-tool/issues) on GitHub.
+If you run into issues, [open an issue](https://github.com/etheaven/codex-mcp-server/issues) on GitHub.
 :::
