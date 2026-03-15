@@ -8,6 +8,5 @@
   "homepage": "https://github.com/etheaven/codex-mcp-server",
   "repository": "https://github.com/etheaven/codex-mcp-server",
   "license": "MIT",
-  "keywords": ["mcp", "codex", "openai", "cli", "code-generation", "ai", "gpt-5"],
-  "mcpServers": "../.mcp.json"
+  "keywords": ["mcp", "codex", "openai", "cli", "code-generation", "ai", "gpt-5"]
 }
