@@ -354,28 +354,41 @@ export async function executeCodex(
     });
 
     if (!result.ok) {
-      // Enhanced error handling with specific messages
-      const errorMessage = result.stderr || 'Unknown error';
+      // Extract the actual ERROR line from stderr (Codex CLI outputs banner + error)
+      const fullStderr = result.stderr || 'Unknown error';
+      const errorLine =
+        fullStderr
+          .split('\n')
+          .find(line => line.startsWith('ERROR:') || line.includes('"detail"'))
+          ?.trim() || fullStderr;
 
-      if (errorMessage.includes('command not found') || errorMessage.includes('not found')) {
+      if (errorLine.includes('command not found') || errorLine.includes('ENOENT')) {
         throw new Error('Codex CLI not found. Install with: npm install -g @openai/codex');
       }
 
-      if (errorMessage.includes('authentication') || errorMessage.includes('unauthorized')) {
+      if (errorLine.includes('not supported') || errorLine.includes('model is not')) {
+        throw new Error(`Model error: ${errorLine}`);
+      }
+
+      if (errorLine.includes('authentication') || errorLine.includes('unauthorized')) {
         throw new Error('Authentication failed. Run "codex login" or set OPENAI_API_KEY');
       }
 
-      if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
+      if (errorLine.includes('quota') || errorLine.includes('rate limit')) {
         throw new Error('Rate limit exceeded. Please wait and try again');
       }
 
-      if (errorMessage.includes('permission') || errorMessage.includes('sandbox')) {
+      if (
+        errorLine.includes('sandbox policy') ||
+        errorLine.includes('permission denied') ||
+        errorLine.includes('blocked by sandbox')
+      ) {
         throw new Error(
-          `Permission denied. Try adjusting sandbox mode or approval policy: ${errorMessage}`
+          `Permission denied. Try adjusting sandbox mode or approval policy: ${errorLine}`
         );
       }
 
-      throw new Error(`Codex CLI failed: ${errorMessage}`);
+      throw new Error(`Codex CLI failed: ${errorLine}`);
     }
 
     return result.stdout;

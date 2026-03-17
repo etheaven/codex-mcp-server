@@ -199,78 +199,60 @@ export const askCodexTool: UnifiedTool = {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
-      // Enhanced error handling with helpful context
-      if (errorMessage.includes('not found') || errorMessage.includes('command not found')) {
+      // Model not supported (e.g. ChatGPT account limitations)
+      if (errorMessage.includes('not supported') || errorMessage.includes('Model error')) {
+        return `❌ **Model Not Available**: ${errorMessage}
+
+**Solutions:**
+1. Try a different model: \`model: "gpt-5.3-codex"\` or \`model: "o3"\`
+2. If using ChatGPT account, some models require an API key instead
+3. Check available models: \`codex --help\``;
+      }
+
+      if (errorMessage.includes('Codex CLI not found') || errorMessage.includes('ENOENT')) {
         return `❌ **Codex CLI Not Found**: ${ERROR_MESSAGES.CODEX_NOT_FOUND}
 
 **Quick Fix:**
 \`\`\`bash
 npm install -g @openai/codex
-\`\`\`
-
-**Verification:** Run \`codex --version\` to confirm installation.`;
+\`\`\``;
       }
 
-      if (errorMessage.includes('authentication') || errorMessage.includes('unauthorized')) {
+      if (errorMessage.includes('Authentication failed') || errorMessage.includes('unauthorized')) {
         return `❌ **Authentication Failed**: ${ERROR_MESSAGES.AUTHENTICATION_FAILED}
 
 **Setup Options:**
 1. **API Key:** \`export OPENAI_API_KEY=your-key\`
-2. **Login:** \`codex login\` (requires ChatGPT subscription)
-
-**Troubleshooting:** Verify key has Codex access in OpenAI dashboard.`;
+2. **Login:** \`codex login\``;
       }
 
-      if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
+      if (errorMessage.includes('Rate limit') || errorMessage.includes('quota')) {
         return `❌ **Usage Limit Reached**: ${ERROR_MESSAGES.QUOTA_EXCEEDED}
 
-**Solutions:**
-1. Wait and retry - rate limits reset periodically
-2. Check quota in OpenAI dashboard`;
+Wait and retry, or check quota in OpenAI dashboard.`;
       }
 
-      if (errorMessage.includes('timeout')) {
+      if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
         return `❌ **Request Timeout**: Operation took longer than expected
 
-**Solutions:**
-1. Increase timeout: Add \`timeout: 300000\` (5 minutes)
-2. Simplify request: Break complex queries into smaller parts`;
+Try increasing timeout or simplifying the request.`;
       }
 
-      if (errorMessage.includes('sandbox') || errorMessage.includes('permission')) {
-        const debugInfo = [
-          `**Current Configuration:**`,
-          `- yolo: ${yolo}`,
-          `- fullAuto: ${fullAuto}`,
-          `- sandbox: ${sandbox}`,
-          `- sandboxMode: ${sandboxMode}`,
-          `- approvalPolicy: ${approvalPolicy}`,
-          `- search: ${search}`,
-          `- oss: ${oss}`,
-        ].join('\n');
-
-        return `❌ **Permission Error**: ${ERROR_MESSAGES.SANDBOX_VIOLATION}
-
-**Actual CLI Error:**
-\`\`\`
-${errorMessage}
-\`\`\`
-
-${debugInfo}
+      if (
+        errorMessage.includes('sandbox policy') ||
+        errorMessage.includes('Permission denied') ||
+        errorMessage.includes('blocked by sandbox')
+      ) {
+        return `❌ **Permission Error**: ${errorMessage}
 
 **Solutions:**
 - Use \`sandbox: true\` or \`fullAuto: true\` for automated mode
 - Use explicit \`sandboxMode: "workspace-write"\` with \`approvalPolicy: "on-failure"\`
-- Use \`yolo: true\` to bypass all safety (⚠️ dangerous)`;
+- Use \`yolo: true\` to bypass all safety`;
       }
 
-      // Generic error with context
-      return `❌ **Codex Execution Error**: ${errorMessage}
-
-**Debug Steps:**
-1. Verify Codex CLI: \`codex --version\`
-2. Check authentication: \`codex login\`
-3. Try simpler query first`;
+      // Generic — always show the actual error
+      return `❌ **Codex Error**: ${errorMessage}`;
     }
   },
 };
