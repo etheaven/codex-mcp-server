@@ -69,6 +69,13 @@ export async function executeCodexCLI(
     args.push(CLI.FLAGS.YOLO);
   } else if (options?.fullAuto) {
     args.push(CLI.FLAGS.FULL_AUTO);
+    // fullAuto implies workspace-write unless sandboxMode explicitly set
+    if (options?.sandboxMode) {
+      args.push(CLI.FLAGS.SANDBOX_MODE, options.sandboxMode);
+    } else {
+      Logger.debug('fullAuto enabled: auto-setting sandbox to workspace-write');
+      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
+    }
   } else {
     if (options?.approvalPolicy) {
       args.push(CLI.FLAGS.ASK_FOR_APPROVAL, options.approvalPolicy);
@@ -230,6 +237,13 @@ export async function executeCodex(
     args.push(CLI.FLAGS.YOLO);
   } else if (options?.fullAuto) {
     args.push(CLI.FLAGS.FULL_AUTO);
+    // fullAuto implies workspace-write unless sandboxMode explicitly set
+    if (options?.sandboxMode) {
+      args.push(CLI.FLAGS.SANDBOX_MODE, options.sandboxMode);
+    } else {
+      Logger.debug('fullAuto enabled: auto-setting sandbox to workspace-write');
+      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
+    }
   } else {
     // Approval policy
     if (options?.approval || options?.approvalPolicy) {
