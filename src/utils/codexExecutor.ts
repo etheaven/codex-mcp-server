@@ -276,7 +276,7 @@ export async function executeCodex(
   });
 
   if (resolvedWorkingDir) {
-    args.push(CLI.FLAGS.WORKING_DIR, resolvedWorkingDir);
+    args.push(CLI.FLAGS.CD, resolvedWorkingDir);
     Logger.debug(`Resolved working directory for executeCodex: ${resolvedWorkingDir}`);
   }
 

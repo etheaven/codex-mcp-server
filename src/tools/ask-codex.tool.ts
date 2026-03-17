@@ -238,7 +238,6 @@ npm install -g @openai/codex
       }
 
       if (errorMessage.includes('sandbox') || errorMessage.includes('permission')) {
-        // Enhanced debugging information
         const debugInfo = [
           `**Current Configuration:**`,
           `- yolo: ${yolo}`,
@@ -252,54 +251,17 @@ npm install -g @openai/codex
 
         return `❌ **Permission Error**: ${ERROR_MESSAGES.SANDBOX_VIOLATION}
 
+**Actual CLI Error:**
+\`\`\`
+${errorMessage}
+\`\`\`
+
 ${debugInfo}
 
-**Root Cause:**
-This error typically occurs when:
-1. \`approvalPolicy\` is set without \`sandboxMode\` (now auto-fixed in v1.2+)
-2. Explicit \`sandboxMode: "read-only"\` blocks file modifications
-3. Codex CLI defaults to restrictive permissions
-4. **YOLO mode not working**: If yolo is true but still blocked, there may be a configuration conflict
-
 **Solutions:**
-
-**Option A - Explicit Control (Recommended):**
-\`\`\`json
-{
-  "approvalPolicy": "on-failure",
-  "sandboxMode": "workspace-write",
-  "model": "gpt-5.4",
-  "prompt": "your task..."
-}
-\`\`\`
-
-**Option B - Automated Mode:**
-\`\`\`json
-{
-  "sandbox": true,  // Enables fullAuto (workspace-write + on-failure)
-  "model": "gpt-5.4",
-  "prompt": "your task..."
-}
-\`\`\`
-
-**Option C - Full Bypass (⚠️ Use with caution):**
-\`\`\`json
-{
-  "yolo": true,
-  "model": "gpt-5.4",
-  "prompt": "your task..."
-}
-\`\`\`
-
-**Debug Steps:**
-1. Check if yolo mode is being overridden by other settings
-2. Verify Codex CLI version supports yolo flag
-3. Try using only yolo without other conflicting parameters
-
-**Sandbox Modes:**
-- \`read-only\`: Analysis only, no modifications
-- \`workspace-write\`: Can edit files in workspace (safe for most tasks)
-- \`danger-full-access\`: Full system access (use with caution)`;
+- Use \`sandbox: true\` or \`fullAuto: true\` for automated mode
+- Use explicit \`sandboxMode: "workspace-write"\` with \`approvalPolicy: "on-failure"\`
+- Use \`yolo: true\` to bypass all safety (⚠️ dangerous)`;
       }
 
       // Generic error with context
