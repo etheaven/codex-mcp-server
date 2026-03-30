@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.3.8] - 2026-03-30
+
+- Added `search-insights` to devDependencies so `npm ci` succeeds in GitHub release jobs
+- Carries forward the empty `ask-codex` response fix and parser hardening for the first publishable release containing that fix
+
 ## [1.3.7] - 2026-03-30
 
 - Synced `package-lock.json` with the package manifest so CI release jobs can complete with `npm ci`

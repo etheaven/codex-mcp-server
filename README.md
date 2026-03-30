@@ -12,7 +12,7 @@
 
 Codex MCP Tool is an open‑source Model Context Protocol (MCP) server that connects your IDE or AI assistant (Claude, Cursor, etc.) to the Codex CLI. It enables non‑interactive automation with `codex exec`, safe sandboxed edits with approvals, and large‑scale code analysis via `@` file references. Built for reliability and speed, it streams progress updates, supports structured change mode (OLD/NEW patch output), and integrates cleanly with standard MCP clients for code review, refactoring, documentation, and CI automation.
 
-> **Latest Release (v1.3.7)**: Fixed empty `ask-codex` responses, improved Codex CLI transcript parsing, and repaired release packaging so npm/marketplace updates publish correctly. [See changelog](#recent-updates)
+> **Latest Release (v1.3.8)**: Fixed empty `ask-codex` responses, improved Codex CLI transcript parsing, and repaired release packaging so npm/marketplace updates publish correctly. [See changelog](#recent-updates)
 
 - Ask Codex questions from your MCP client, or brainstorm ideas programmatically.
 
@@ -367,6 +367,12 @@ You can use these commands directly in Claude Code's interface (compatibility wi
   - **`message`** (optional): A message to echo back.
 
 ## Recent Updates
+
+### v1.3.8 (2026-03-30)
+
+**📦 Release Fix:**
+- Added `search-insights` to devDependencies so `npm ci` passes in the GitHub release workflow
+- This is the first publishable release that includes the empty `ask-codex` response fix
 
 ### v1.3.7 (2026-03-30)
 
