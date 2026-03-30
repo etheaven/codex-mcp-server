@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.3.7] - 2026-03-30
+
+- Synced `package-lock.json` with the package manifest so CI release jobs can complete with `npm ci`
+- Carries forward the empty `ask-codex` response fix and transcript parser hardening from the failed `1.3.6` release attempt
+
 ## [1.3.6] - 2026-03-30
 
 - Fixed empty `ask-codex` responses when Codex CLI returned useful transcript data on `stderr`
