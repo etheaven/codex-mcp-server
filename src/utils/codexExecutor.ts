@@ -1,4 +1,4 @@
-import { executeCommand, executeCommandDetailed, RetryOptions } from './commandExecutor.js';
+import { executeCommandDetailed, RetryOptions } from './commandExecutor.js';
 import { Logger } from './logger.js';
 import { CLI } from '../constants.js';
 import { writeFileSync, unlinkSync } from 'fs';
@@ -44,6 +44,22 @@ export interface CodexExecOptions {
   readonly oss?: boolean; // Use local Ollama server
   readonly enableFeatures?: string[]; // Enable feature flags
   readonly disableFeatures?: string[]; // Disable feature flags
+}
+
+function selectCodexOutput(stdout: string, stderr: string): string {
+  const trimmedStdout = stdout.trim();
+  if (trimmedStdout) {
+    return trimmedStdout;
+  }
+
+  const trimmedStderr = stderr.trim();
+  if (trimmedStderr) {
+    Logger.warn('Codex CLI returned empty stdout; falling back to stderr output');
+    return trimmedStderr;
+  }
+
+  Logger.warn('Codex CLI returned no output on stdout or stderr');
+  return '';
 }
 
 /**
@@ -195,7 +211,7 @@ export async function executeCodexCLI(
       );
     }
 
-    return result.stdout;
+    return selectCodexOutput(result.stdout, result.stderr);
   } catch (error) {
     Logger.error('Codex CLI execution failed:', error);
     throw error;
@@ -391,7 +407,7 @@ export async function executeCodex(
       throw new Error(`Codex CLI failed: ${errorLine}`);
     }
 
-    return result.stdout;
+    return selectCodexOutput(result.stdout, result.stderr);
   } catch (error) {
     Logger.error('Codex execution failed:', error);
     throw error;
