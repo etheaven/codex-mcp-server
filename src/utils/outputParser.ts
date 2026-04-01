@@ -30,8 +30,13 @@ export function parseCodexOutput(rawOutput: string): CodexOutput {
   let response = normalizedOutput;
   let tokensUsed: number | undefined;
 
-  let currentSection: 'header' | 'metadata' | 'content' | 'userInstructions' | 'thinking' | 'response' =
-    'header';
+  let currentSection:
+    | 'header'
+    | 'metadata'
+    | 'content'
+    | 'userInstructions'
+    | 'thinking'
+    | 'response' = 'header';
   let metadataLines: string[] = [];
   let userInstructionLines: string[] = [];
   let thinkingLines: string[] = [];
@@ -228,8 +233,7 @@ function isDiagnosticLine(line: string): boolean {
   }
 
   return (
-    /^\d{4}-\d{2}-\d{2}T.*\b(?:WARN|INFO|ERROR|DEBUG)\b/.test(line) ||
-    /^mcp startup:/i.test(line)
+    /^\d{4}-\d{2}-\d{2}T.*\b(?:WARN|INFO|ERROR|DEBUG)\b/.test(line) || /^mcp startup:/i.test(line)
   );
 }
 
@@ -305,6 +309,21 @@ export function formatCodexResponse(
   return formatted;
 }
 
+// Maximum response size in characters (~4k tokens ≈ 16k chars) to prevent
+// overwhelming MCP clients like Claude Code whose context fills up fast.
+const MAX_RESPONSE_CHARS = 16000;
+
+function truncateResponse(text: string, maxChars: number): string {
+  if (text.length <= maxChars) {
+    return text;
+  }
+  const truncated = text.slice(0, maxChars);
+  // Cut at the last complete line to avoid broken markdown
+  const lastNewline = truncated.lastIndexOf('\n');
+  const cleanCut = lastNewline > maxChars * 0.8 ? truncated.slice(0, lastNewline) : truncated;
+  return `${cleanCut}\n\n⚠️ *Response truncated (${text.length} chars → ${cleanCut.length} chars). Use a more specific prompt for focused results.*`;
+}
+
 export function formatCodexResponseForMCP(
   result: string,
   includeThinking: boolean = true,
@@ -318,10 +337,11 @@ export function formatCodexResponseForMCP(
       Logger.warn('Parsed Codex response was empty; returning raw output');
       return fallbackOutput || 'Warning: Codex returned an empty response.';
     }
-    return formatCodexResponse(parsed, includeThinking, includeMetadata);
+    const formatted = formatCodexResponse(parsed, includeThinking, includeMetadata);
+    return truncateResponse(formatted, MAX_RESPONSE_CHARS);
   } catch {
-    // If parsing fails, return the raw output
-    return result;
+    // If parsing fails, return the raw output (truncated)
+    return truncateResponse(result, MAX_RESPONSE_CHARS);
   }
 }
 

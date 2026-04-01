@@ -356,8 +356,10 @@ export async function executeCodex(
   // Skip git repo check (not all environments are git repos)
   args.push(CLI.FLAGS.SKIP_GIT_REPO_CHECK);
 
-  // Add the prompt
-  args.push(prompt);
+  // Add the prompt with conciseness instruction
+  args.push(
+    `Please provide a focused, concise response without unnecessary elaboration. ${prompt}`
+  );
 
   try {
     const timeoutMs = options?.timeout || options?.timeoutMs || 600000; // 10 minutes default
