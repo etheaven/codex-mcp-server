@@ -1,4 +1,5 @@
 import { Logger } from './logger.js';
+import { CLI, envInt } from '../constants.js';
 
 // Codex Output Interface
 export interface CodexOutput {
@@ -311,9 +312,12 @@ export function formatCodexResponse(
 
 // Maximum response size in characters (~4k tokens ≈ 16k chars) to prevent
 // overwhelming MCP clients like Claude Code whose context fills up fast.
-const MAX_RESPONSE_CHARS = 16000;
+// Override with CODEX_MCP_MAX_RESPONSE_CHARS.
+function maxResponseChars(): number {
+  return envInt(CLI.ENV_VARS.MAX_RESPONSE_CHARS, CLI.DEFAULTS.MAX_RESPONSE_CHARS);
+}
 
-function truncateResponse(text: string, maxChars: number): string {
+export function truncateResponse(text: string, maxChars: number): string {
   if (text.length <= maxChars) {
     return text;
   }
@@ -321,7 +325,7 @@ function truncateResponse(text: string, maxChars: number): string {
   // Cut at the last complete line to avoid broken markdown
   const lastNewline = truncated.lastIndexOf('\n');
   const cleanCut = lastNewline > maxChars * 0.8 ? truncated.slice(0, lastNewline) : truncated;
-  return `${cleanCut}\n\n⚠️ *Response truncated (${text.length} chars → ${cleanCut.length} chars). Use a more specific prompt for focused results.*`;
+  return `${cleanCut}\n\n⚠️ *Response truncated (${text.length} chars → ${cleanCut.length} chars). Use a more specific prompt, or raise CODEX_MCP_MAX_RESPONSE_CHARS.*`;
 }
 
 export function formatCodexResponseForMCP(
@@ -338,10 +342,10 @@ export function formatCodexResponseForMCP(
       return fallbackOutput || 'Warning: Codex returned an empty response.';
     }
     const formatted = formatCodexResponse(parsed, includeThinking, includeMetadata);
-    return truncateResponse(formatted, MAX_RESPONSE_CHARS);
+    return truncateResponse(formatted, maxResponseChars());
   } catch {
     // If parsing fails, return the raw output (truncated)
-    return truncateResponse(result, MAX_RESPONSE_CHARS);
+    return truncateResponse(result, maxResponseChars());
   }
 }
 

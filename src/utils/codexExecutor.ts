@@ -1,11 +1,14 @@
-import { executeCommandDetailed, RetryOptions } from './commandExecutor.js';
+import { executeCommandDetailed, defaultTimeoutMs, RetryOptions } from './commandExecutor.js';
 import { Logger } from './logger.js';
 import { CLI } from '../constants.js';
-import { writeFileSync, unlinkSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { randomBytes } from 'crypto';
 import { resolveWorkingDirectory } from './workingDirResolver.js';
+import {
+  buildExecInvocation,
+  buildReviewInvocation,
+  CodexArgOptions,
+  CodexInvocation,
+  ReviewTarget,
+} from './codexArgs.js';
 
 // Type-safe enums
 export enum ApprovalPolicy {
@@ -23,10 +26,10 @@ export enum SandboxMode {
 
 export interface CodexExecOptions {
   readonly model?: string;
-  readonly reasoningEffort?: string; // none, minimal, low, medium, high, xhigh
+  readonly reasoningEffort?: string;
   readonly fullAuto?: boolean;
-  readonly approvalPolicy?: ApprovalPolicy;
-  readonly sandboxMode?: SandboxMode;
+  readonly approvalPolicy?: ApprovalPolicy | string;
+  readonly sandboxMode?: SandboxMode | string;
   readonly approval?: string;
   readonly yolo?: boolean;
   readonly cd?: string;
@@ -35,15 +38,17 @@ export interface CodexExecOptions {
   readonly timeout?: number;
   readonly maxOutputBytes?: number;
   readonly retry?: RetryOptions;
-  readonly useStdinForLongPrompts?: boolean; // Use stdin for prompts > 100KB
   readonly image?: string | string[];
   readonly config?: string | Record<string, any>;
   readonly profile?: string;
+  readonly search?: boolean; // Enable live web search (--search)
+  readonly oss?: boolean; // Use local open-source provider (--oss)
+  readonly enableFeatures?: string[];
+  readonly disableFeatures?: string[];
+  /** @deprecated prompts always go via stdin now */
+  readonly useStdinForLongPrompts?: boolean;
+  /** @deprecated exec mode is always used */
   readonly useExec?: boolean;
-  readonly search?: boolean; // Enable web search
-  readonly oss?: boolean; // Use local Ollama server
-  readonly enableFeatures?: string[]; // Enable feature flags
-  readonly disableFeatures?: string[]; // Disable feature flags
 }
 
 function selectCodexOutput(stdout: string, stderr: string): string {
@@ -62,356 +67,187 @@ function selectCodexOutput(stdout: string, stderr: string): string {
   return '';
 }
 
+/** Pick the most informative line from Codex stderr (it prints a banner first). */
+export function extractErrorLine(stderr: string): string {
+  const lines = stderr.split('\n').map(line => line.trim());
+  return (
+    lines.find(line => line.startsWith('ERROR:')) ||
+    lines.find(line => line.startsWith('error:')) ||
+    lines.find(line => line.includes('"message"')) ||
+    stderr.trim() ||
+    'Unknown error (no stderr output)'
+  );
+}
+
+/** Map a failed Codex run to an actionable error message. */
+export function describeCodexFailure(stderr: string, timedOut: boolean, timeoutMs: number): string {
+  if (timedOut) {
+    const minutes = Math.round(timeoutMs / 60000);
+    return (
+      `Codex CLI timed out after ${timeoutMs}ms (~${minutes} min). ` +
+      `Pass a larger \`timeout\` (ms) or set CODEX_MCP_TIMEOUT_MS. ` +
+      `Your MCP client may enforce its own limit too (Claude Code: MCP_TOOL_TIMEOUT).`
+    );
+  }
+
+  const errorLine = extractErrorLine(stderr);
+  const lower = errorLine.toLowerCase();
+
+  if (lower.includes("command 'codex' not found") || lower.includes('enoent')) {
+    return 'Codex CLI not found. Install with: npm install -g @openai/codex (then restart your MCP client)';
+  }
+  if (lower.includes('unexpected argument') || lower.includes('invalid value')) {
+    return (
+      `Codex CLI rejected an argument: ${errorLine}. ` +
+      `Your Codex CLI may be newer or older than this server expects; run \`codex --version\` and update one of them.`
+    );
+  }
+  if (
+    lower.includes('unsupported value') ||
+    lower.includes('model is not') ||
+    lower.includes('model_not_found') ||
+    (lower.includes('not supported') && (lower.includes('model') || lower.includes('reasoning')))
+  ) {
+    return `Model error: ${errorLine}. Call the list-models tool to see models and reasoning levels your Codex CLI supports.`;
+  }
+  if (lower.includes('authentication') || lower.includes('unauthorized')) {
+    return 'Authentication failed. Run "codex login" or set OPENAI_API_KEY';
+  }
+  if (lower.includes('quota') || lower.includes('rate limit') || lower.includes('usage limit')) {
+    return `Rate limit exceeded: ${errorLine}`;
+  }
+  if (
+    lower.includes('sandbox policy') ||
+    lower.includes('permission denied') ||
+    lower.includes('blocked by sandbox')
+  ) {
+    return `Permission denied. Try adjusting sandbox mode or approval policy: ${errorLine}`;
+  }
+  return `Codex CLI failed: ${errorLine}`;
+}
+
+function toArgOptions(prompt: string, options: CodexExecOptions = {}): CodexArgOptions {
+  const workingDir = resolveWorkingDirectory({
+    workingDir: options.workingDir || options.cd,
+    prompt,
+  });
+  if (workingDir) {
+    Logger.debug(`Resolved working directory: ${workingDir}`);
+  }
+  return {
+    model: options.model,
+    reasoningEffort: options.reasoningEffort,
+    fullAuto: options.fullAuto,
+    approvalPolicy: options.approvalPolicy,
+    approval: options.approval,
+    sandboxMode: options.sandboxMode,
+    yolo: options.yolo,
+    workingDir,
+    config: options.config,
+    profile: options.profile,
+    image: options.image,
+    search: options.search,
+    oss: options.oss,
+    enableFeatures: options.enableFeatures,
+    disableFeatures: options.disableFeatures,
+  };
+}
+
+interface RunOptions {
+  readonly timeoutMs: number;
+  readonly maxOutputBytes?: number;
+  readonly retry?: RetryOptions;
+  readonly salvagePartial: boolean;
+}
+
+async function runCodex(
+  invocation: CodexInvocation,
+  run: RunOptions,
+  onProgress?: (newOutput: string) => void
+): Promise<string> {
+  const result = await executeCommandDetailed(CLI.COMMANDS.CODEX, invocation.args, {
+    onProgress,
+    timeoutMs: run.timeoutMs,
+    maxOutputBytes: run.maxOutputBytes,
+    retry: run.retry,
+    stdin: invocation.stdin,
+  });
+
+  if (result.ok) {
+    return selectCodexOutput(result.stdout, result.stderr);
+  }
+
+  if (run.salvagePartial && result.partialStdout && result.partialStdout.length > 1000) {
+    Logger.warn('Command failed but partial output available, attempting to use it');
+    return result.partialStdout;
+  }
+
+  const message =
+    result.partialStdout !== undefined
+      ? `Codex output exceeded the ${run.maxOutputBytes ?? 50 * 1024 * 1024}-byte limit and was stopped. Narrow the request.`
+      : describeCodexFailure(result.stderr, result.timedOut, run.timeoutMs);
+  Logger.error('Codex CLI execution failed:', message);
+  throw new Error(message);
+}
+
+function resolveTimeout(options?: CodexExecOptions): number {
+  return options?.timeout || options?.timeoutMs || defaultTimeoutMs();
+}
+
 /**
- * Execute Codex CLI with enhanced error handling and memory efficiency
+ * Execute `codex exec` (used by brainstorm). Salvages large partial output.
  */
 export async function executeCodexCLI(
   prompt: string,
   options?: CodexExecOptions,
   onProgress?: (newOutput: string) => void
 ): Promise<string> {
-  const args: string[] = [];
-
-  // Validate options
-  if (options?.approvalPolicy && options?.yolo) {
-    throw new Error('Cannot use both yolo and approvalPolicy');
-  }
-  if (options?.sandboxMode && options?.yolo) {
-    throw new Error('Cannot use both yolo and sandboxMode');
-  }
-
-  // Build command arguments
-  if (options?.yolo) {
-    args.push(CLI.FLAGS.YOLO);
-  } else if (options?.fullAuto) {
-    args.push(CLI.FLAGS.FULL_AUTO);
-    // fullAuto implies workspace-write unless sandboxMode explicitly set
-    if (options?.sandboxMode) {
-      args.push(CLI.FLAGS.SANDBOX_MODE, options.sandboxMode);
-    } else {
-      Logger.debug('fullAuto enabled: auto-setting sandbox to workspace-write');
-      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
-    }
-  } else {
-    if (options?.approvalPolicy) {
-      args.push(CLI.FLAGS.ASK_FOR_APPROVAL, options.approvalPolicy);
-    }
-    // Note: --search requires network access, so if search is enabled and no explicit sandbox mode
-    // is set, we need to ensure network is not blocked
-    if (options?.sandboxMode) {
-      args.push(CLI.FLAGS.SANDBOX_MODE, options.sandboxMode);
-    } else if (options?.search || options?.oss) {
-      // Auto-enable workspace-write for search/oss if no sandbox specified
-      Logger.debug(
-        'Search/OSS enabled: auto-setting sandbox to workspace-write for network access'
-      );
-      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
-    } else if (options?.approvalPolicy) {
-      // Smart default: if approvalPolicy is set but no sandboxMode specified,
-      // auto-enable workspace-write to prevent read-only permission errors
-      Logger.debug(
-        'Approval policy set without sandbox mode: auto-setting sandbox to workspace-write'
-      );
-      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
-    }
-  }
-
-  if (options?.model) {
-    args.push(CLI.FLAGS.MODEL, options.model);
-  }
-
-  // Reasoning effort (passed as config override)
-  if (options?.reasoningEffort) {
-    args.push(CLI.FLAGS.CONFIG, `model_reasoning_effort="${options.reasoningEffort}"`);
-    Logger.debug(`Setting reasoning effort: ${options.reasoningEffort}`);
-  }
-
-  // Resolve working directory using intelligent fallback chain
-  const resolvedWorkingDir = resolveWorkingDirectory({
-    workingDir: options?.cd,
-    prompt: prompt,
-  });
-
-  if (resolvedWorkingDir) {
-    args.push(CLI.FLAGS.CD, resolvedWorkingDir);
-    Logger.debug(`Resolved working directory: ${resolvedWorkingDir}`);
-  }
-
-  // OSS (Ollama) mode
-  if (options?.oss) {
-    args.push(CLI.FLAGS.OSS);
-  }
-
-  // Enable features (including web search)
-  const enableFeatures = [...(options?.enableFeatures || [])];
-
-  // Add web_search_request feature if search is requested
-  if (options?.search && !enableFeatures.includes('web_search_request')) {
-    enableFeatures.push('web_search_request');
-  }
-
-  // Add all features to args
-  for (const feature of enableFeatures) {
-    args.push(CLI.FLAGS.ENABLE, feature);
-  }
-
-  // Disable features
-  if (options?.disableFeatures && Array.isArray(options.disableFeatures)) {
-    for (const feature of options.disableFeatures) {
-      args.push(CLI.FLAGS.DISABLE, feature);
-    }
-  }
-
-  // Non-interactive run
-  args.push('exec');
-
-  // Skip git repo check (not all environments are git repos)
-  args.push(CLI.FLAGS.SKIP_GIT_REPO_CHECK);
-
-  // Add conciseness instruction
-  const concisePrompt = `Please provide a focused, concise response without unnecessary elaboration. ${prompt}`;
-
-  // Check if prompt is too long for command line (OS dependent, ~100KB is safe)
-  const promptSizeBytes = Buffer.byteLength(concisePrompt, 'utf8');
-  const useStdin = options?.useStdinForLongPrompts !== false && promptSizeBytes > 100 * 1024;
-
-  let tempFile: string | undefined;
-
-  try {
-    if (useStdin) {
-      // Write prompt to temp file and pass via stdin redirect
-      tempFile = join(tmpdir(), `codex-prompt-${randomBytes(8).toString('hex')}.txt`);
-      writeFileSync(tempFile, concisePrompt, 'utf8');
-      args.push(`< ${tempFile}`);
-      Logger.debug(`Using temp file for large prompt (${promptSizeBytes} bytes)`);
-    } else {
-      args.push(concisePrompt);
-    }
-
-    // Use detailed execution for better error handling
-    const result = await executeCommandDetailed(CLI.COMMANDS.CODEX, args, {
-      onProgress,
-      timeoutMs: options?.timeoutMs,
+  const invocation = buildExecInvocation(prompt, toArgOptions(prompt, options));
+  return runCodex(
+    invocation,
+    {
+      timeoutMs: resolveTimeout(options),
       maxOutputBytes: options?.maxOutputBytes,
       retry: options?.retry,
-    });
-
-    if (!result.ok) {
-      // Try to salvage partial output if available
-      if (result.partialStdout && result.partialStdout.length > 1000) {
-        Logger.warn('Command failed but partial output available, attempting to use it');
-        return result.partialStdout;
-      }
-
-      const errorMessage = result.stderr || 'Unknown error';
-      throw new Error(
-        result.timedOut
-          ? `Codex CLI timed out after ${options?.timeoutMs || 600000}ms`
-          : `Codex CLI failed with exit code ${result.code}: ${errorMessage}`
-      );
-    }
-
-    return selectCodexOutput(result.stdout, result.stderr);
-  } catch (error) {
-    Logger.error('Codex CLI execution failed:', error);
-    throw error;
-  } finally {
-    // Clean up temp file
-    if (tempFile) {
-      try {
-        unlinkSync(tempFile);
-      } catch (e) {
-        Logger.debug('Failed to delete temp file:', e);
-      }
-    }
-  }
+      salvagePartial: true,
+    },
+    onProgress
+  );
 }
 
 /**
- * High-level executeCodex function with comprehensive options support
+ * Execute `codex exec` with the full option set (ask-codex, batch-codex).
  */
 export async function executeCodex(
   prompt: string,
-  options?: CodexExecOptions & { [key: string]: any },
+  options?: CodexExecOptions,
   onProgress?: (newOutput: string) => void
 ): Promise<string> {
-  const args: string[] = [];
-
-  // Model selection
-  if (options?.model) {
-    args.push(CLI.FLAGS.MODEL, options.model);
-  }
-
-  // Reasoning effort (passed as config override to Codex CLI)
-  if (options?.reasoningEffort) {
-    args.push(CLI.FLAGS.CONFIG, `model_reasoning_effort="${options.reasoningEffort}"`);
-    Logger.debug(`Setting reasoning effort: ${options.reasoningEffort}`);
-  }
-
-  // Safety controls
-  if (options?.yolo) {
-    args.push(CLI.FLAGS.YOLO);
-  } else if (options?.fullAuto) {
-    args.push(CLI.FLAGS.FULL_AUTO);
-    // fullAuto implies workspace-write unless sandboxMode explicitly set
-    if (options?.sandboxMode) {
-      args.push(CLI.FLAGS.SANDBOX_MODE, options.sandboxMode);
-    } else {
-      Logger.debug('fullAuto enabled: auto-setting sandbox to workspace-write');
-      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
-    }
-  } else {
-    // Approval policy
-    if (options?.approval || options?.approvalPolicy) {
-      const approvalValue = options.approval || options.approvalPolicy;
-      if (approvalValue) {
-        args.push(CLI.FLAGS.ASK_FOR_APPROVAL, approvalValue);
-      }
-    }
-    // Sandbox mode
-    if (options?.sandboxMode) {
-      args.push(CLI.FLAGS.SANDBOX_MODE, options.sandboxMode);
-    } else if (options?.search || options?.oss) {
-      // Auto-enable workspace-write for search/oss if no sandbox specified
-      Logger.debug(
-        'Search/OSS enabled: auto-setting sandbox to workspace-write for network access'
-      );
-      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
-    } else if (options?.approval || options?.approvalPolicy) {
-      // Smart default: if approval is set but no sandboxMode specified,
-      // auto-enable workspace-write to prevent read-only permission errors
-      Logger.debug('Approval set without sandbox mode: auto-setting sandbox to workspace-write');
-      args.push(CLI.FLAGS.SANDBOX_MODE, 'workspace-write');
-    }
-  }
-
-  // Resolve working directory using intelligent fallback chain
-  const resolvedWorkingDir = resolveWorkingDirectory({
-    workingDir: options?.workingDir || options?.cd,
-    prompt: prompt,
-  });
-
-  if (resolvedWorkingDir) {
-    args.push(CLI.FLAGS.CD, resolvedWorkingDir);
-    Logger.debug(`Resolved working directory for executeCodex: ${resolvedWorkingDir}`);
-  }
-
-  // Configuration
-  if (options?.config) {
-    if (typeof options.config === 'string') {
-      args.push(CLI.FLAGS.CONFIG, options.config);
-    } else {
-      // Convert object to key=value pairs
-      const configStr = Object.entries(options.config)
-        .map(([k, v]) => `${k}=${v}`)
-        .join(',');
-      args.push(CLI.FLAGS.CONFIG, configStr);
-    }
-  }
-
-  // Profile
-  if (options?.profile) {
-    args.push(CLI.FLAGS.PROFILE, options.profile);
-  }
-
-  // Images
-  if (options?.image) {
-    const images = Array.isArray(options.image) ? options.image : [options.image];
-    for (const img of images) {
-      args.push(CLI.FLAGS.IMAGE, img);
-    }
-  }
-
-  // OSS (Ollama) mode
-  if (options?.oss) {
-    args.push(CLI.FLAGS.OSS);
-  }
-
-  // Enable features (including web search)
-  const enableFeatures = [...(options?.enableFeatures || [])];
-
-  // Add web_search_request feature if search is requested
-  if (options?.search && !enableFeatures.includes('web_search_request')) {
-    enableFeatures.push('web_search_request');
-  }
-
-  // Add all features to args
-  for (const feature of enableFeatures) {
-    args.push(CLI.FLAGS.ENABLE, feature);
-  }
-
-  // Disable features
-  if (options?.disableFeatures && Array.isArray(options.disableFeatures)) {
-    for (const feature of options.disableFeatures) {
-      args.push(CLI.FLAGS.DISABLE, feature);
-    }
-  }
-
-  // Use exec mode for non-interactive execution
-  if (options?.useExec !== false) {
-    // Default to true for non-interactive execution
-    args.push('exec');
-  }
-
-  // Skip git repo check (not all environments are git repos)
-  args.push(CLI.FLAGS.SKIP_GIT_REPO_CHECK);
-
-  // Add the prompt with conciseness instruction
-  args.push(
-    `Please provide a focused, concise response without unnecessary elaboration. ${prompt}`
-  );
-
-  try {
-    const timeoutMs = options?.timeout || options?.timeoutMs || 600000; // 10 minutes default
-
-    const result = await executeCommandDetailed(CLI.COMMANDS.CODEX, args, {
-      onProgress,
-      timeoutMs,
+  const invocation = buildExecInvocation(prompt, toArgOptions(prompt, options));
+  return runCodex(
+    invocation,
+    {
+      timeoutMs: resolveTimeout(options),
       maxOutputBytes: options?.maxOutputBytes,
       retry: options?.retry,
-    });
+      salvagePartial: false,
+    },
+    onProgress
+  );
+}
 
-    if (!result.ok) {
-      // Extract the actual ERROR line from stderr (Codex CLI outputs banner + error)
-      const fullStderr = result.stderr || 'Unknown error';
-      const errorLine =
-        fullStderr
-          .split('\n')
-          .find(line => line.startsWith('ERROR:') || line.includes('"detail"'))
-          ?.trim() || fullStderr;
-
-      if (errorLine.includes('command not found') || errorLine.includes('ENOENT')) {
-        throw new Error('Codex CLI not found. Install with: npm install -g @openai/codex');
-      }
-
-      if (errorLine.includes('not supported') || errorLine.includes('model is not')) {
-        throw new Error(`Model error: ${errorLine}`);
-      }
-
-      if (errorLine.includes('authentication') || errorLine.includes('unauthorized')) {
-        throw new Error('Authentication failed. Run "codex login" or set OPENAI_API_KEY');
-      }
-
-      if (errorLine.includes('quota') || errorLine.includes('rate limit')) {
-        throw new Error('Rate limit exceeded. Please wait and try again');
-      }
-
-      if (
-        errorLine.includes('sandbox policy') ||
-        errorLine.includes('permission denied') ||
-        errorLine.includes('blocked by sandbox')
-      ) {
-        throw new Error(
-          `Permission denied. Try adjusting sandbox mode or approval policy: ${errorLine}`
-        );
-      }
-
-      throw new Error(`Codex CLI failed: ${errorLine}`);
-    }
-
-    return selectCodexOutput(result.stdout, result.stderr);
-  } catch (error) {
-    Logger.error('Codex execution failed:', error);
-    throw error;
-  }
+/**
+ * Execute `codex review` against git changes in the working directory.
+ */
+export async function executeCodexReview(
+  target: ReviewTarget,
+  options?: CodexExecOptions,
+  onProgress?: (newOutput: string) => void
+): Promise<string> {
+  const invocation = buildReviewInvocation(target, toArgOptions(target.prompt || '', options));
+  return runCodex(
+    invocation,
+    { timeoutMs: resolveTimeout(options), salvagePartial: false },
+    onProgress
+  );
 }

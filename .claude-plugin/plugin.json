@@ -1,7 +1,7 @@
 {
   "name": "codex-mcp-server",
-  "version": "1.3.8",
-  "description": "MCP server for Codex CLI — use OpenAI Codex (gpt-5.4, gpt-5.3-codex, o3, etc.) directly from Claude Code with model selection, reasoning effort control, and file analysis",
+  "version": "1.4.0",
+  "description": "MCP server for Codex CLI — call the OpenAI Codex CLI from Claude Code: ask, review git changes, brainstorm with model selection, reasoning effort control, and file analysis",
   "author": {
     "name": "Taras Trishchuk"
   },

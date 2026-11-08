@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { UnifiedTool } from './registry.js';
 import { Logger } from '../utils/logger.js';
 import { executeCodexCLI } from '../utils/codexExecutor.js';
+import { modelSchema, reasoningEffortSchema, searchSchema, timeoutSchema } from './sharedSchema.js';
 
 function buildBrainstormPrompt(config: {
   prompt: string;
@@ -104,20 +105,8 @@ ${domain ? `Given the ${domain} domain, I'll apply the most effective combinatio
 
 const brainstormArgsSchema = z.object({
   prompt: z.string().min(1).describe('Brainstorming challenge or question'),
-  model: z
-    .string()
-    .optional()
-    .describe(
-      'Model ID. Recommended order: gpt-5.4 (default), gpt-5.3-codex (coding), gpt-5.2-codex, ' +
-        'gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano, gpt-4.1.'
-    ),
-  reasoningEffort: z
-    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
-    .optional()
-    .describe(
-      'Reasoning effort: none, minimal, low, medium (default), high, xhigh. ' +
-        'Higher = deeper analysis, slower, more expensive.'
-    ),
+  model: modelSchema,
+  reasoningEffort: reasoningEffortSchema,
   approvalPolicy: z
     .enum(['never', 'on-request', 'on-failure', 'untrusted'])
     .optional()
@@ -126,7 +115,7 @@ const brainstormArgsSchema = z.object({
     .enum(['read-only', 'workspace-write', 'danger-full-access'])
     .optional()
     .describe('Access: read-only, workspace-write, danger-full-access'),
-  fullAuto: z.boolean().optional().describe('Full automation mode'),
+  fullAuto: z.boolean().optional().describe('Allow workspace writes (sandbox workspace-write)'),
   yolo: z.boolean().optional().describe('⚠️ Bypass all safety (dangerous)'),
   cd: z.string().optional().describe('Working directory'),
   methodology: z
@@ -148,10 +137,8 @@ const brainstormArgsSchema = z.object({
     .default(12)
     .describe('Number of ideas (default: 12, range: 5-30)'),
   includeAnalysis: z.boolean().default(true).describe('Include feasibility/impact analysis'),
-  search: z
-    .boolean()
-    .optional()
-    .describe('Enable web search for research (activates web_search_request feature)'),
+  search: searchSchema,
+  timeout: timeoutSchema,
   oss: z.boolean().optional().describe('Use local Ollama server'),
   enableFeatures: z.array(z.string()).optional().describe('Enable feature flags'),
   disableFeatures: z.array(z.string()).optional().describe('Disable feature flags'),
@@ -186,6 +173,7 @@ export const brainstormTool: UnifiedTool = {
       oss,
       enableFeatures,
       disableFeatures,
+      timeout,
     } = args;
 
     if (!prompt?.trim()) {
@@ -224,6 +212,7 @@ export const brainstormTool: UnifiedTool = {
         oss: oss as boolean,
         enableFeatures: enableFeatures as string[],
         disableFeatures: disableFeatures as string[],
+        timeout: timeout as number | undefined,
       },
       onProgress
     );

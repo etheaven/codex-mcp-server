@@ -24,8 +24,9 @@ export const STATUS_MESSAGES = {
   PROCESSING_COMPLETE: '✅ Analysis completed successfully',
 } as const;
 
-// Models — kept in sync with https://developers.openai.com/codex/models/
-// and https://developers.openai.com/api/docs/models  (March 2026)
+// Legacy model IDs (March 2026 snapshot). NOT used for validation: any model
+// string is passed through to Codex CLI. Use the `list-models` tool (wraps
+// `codex debug models`) for the models the installed CLI actually offers.
 export const MODELS = {
   // GPT-5.x flagship / reasoning
   GPT_5_4: 'gpt-5.4',
@@ -67,7 +68,7 @@ export const MODEL_RECOMMENDATIONS = {
   LARGE_CONTEXT: 'gpt-4.1',
 } as const;
 
-// Reasoning effort levels — per-model support varies
+// Reasoning effort levels — per-model support varies (see `list-models`)
 export const REASONING_EFFORTS = {
   NONE: 'none',
   MINIMAL: 'minimal',
@@ -75,7 +76,17 @@ export const REASONING_EFFORTS = {
   MEDIUM: 'medium',
   HIGH: 'high',
   XHIGH: 'xhigh',
+  MAX: 'max',
+  ULTRA: 'ultra',
 } as const;
+
+/** Read a positive integer from an env var, falling back to a default. */
+export function envInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[keyof typeof REASONING_EFFORTS];
 
@@ -126,13 +137,17 @@ export const CLI = {
   COMMANDS: {
     CODEX: 'codex',
     CODEX_EXEC: 'codex exec',
+    EXEC: 'exec',
+    REVIEW: 'review',
     ECHO: 'echo',
   },
   // Command flags
   FLAGS: {
     MODEL: '-m',
-    SANDBOX: '-s', // legacy flag. For Codex prefer FULL_AUTO or SANDBOX/APPROVAL flags.
-    FULL_AUTO: '--full-auto',
+    SANDBOX: '-s',
+    // NOTE: '--full-auto' was removed from Codex CLI (hard error in 0.153). Do not emit it.
+    SEARCH: '--search',
+    STDIN_PROMPT: '-', // read the prompt from stdin
     ASK_FOR_APPROVAL: '--ask-for-approval',
     SANDBOX_MODE: '--sandbox',
     APPROVAL: '-a',
@@ -153,6 +168,9 @@ export const CLI = {
   // Default values
   DEFAULTS: {
     MODEL: 'default', // Fallback model used when no specific model is provided
+    AUTO_SANDBOX: 'workspace-write', // used for fullAuto / approvalPolicy without sandboxMode
+    TIMEOUT_MS: 600000, // 10 minutes; override with CODEX_MCP_TIMEOUT_MS
+    MAX_RESPONSE_CHARS: 16000, // override with CODEX_MCP_MAX_RESPONSE_CHARS
     BOOLEAN_TRUE: 'true',
     BOOLEAN_FALSE: 'false',
   },
@@ -161,6 +179,8 @@ export const CLI = {
     CODEX_MCP_CWD: 'CODEX_MCP_CWD', // Primary: Set in MCP client configuration
     PWD: 'PWD', // Secondary: Standard Unix variable
     INIT_CWD: 'INIT_CWD', // Tertiary: Node.js initial directory
+    TIMEOUT_MS: 'CODEX_MCP_TIMEOUT_MS', // Default per-call timeout
+    MAX_RESPONSE_CHARS: 'CODEX_MCP_MAX_RESPONSE_CHARS', // Response truncation limit
   },
 } as const;
 
@@ -183,7 +203,7 @@ export interface ToolArguments {
   message?: string; // For Ping tool -- Un-used.
 
   // Reasoning control
-  reasoningEffort?: string; // none, minimal, low, medium, high, xhigh
+  reasoningEffort?: string; // none, minimal, low, medium, high, xhigh, max, ultra
 
   // New parameters from resource implementation
   image?: string | string[]; // Image file path(s) to include

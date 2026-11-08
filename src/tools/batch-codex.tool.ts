@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { UnifiedTool } from './registry.js';
 import { executeCodex } from '../utils/codexExecutor.js';
+import { modelSchema, reasoningEffortSchema, searchSchema, timeoutSchema } from './sharedSchema.js';
 import { ERROR_MESSAGES, STATUS_MESSAGES, SANDBOX_MODES } from '../constants.js';
 
 // Define task type for batch operations
@@ -12,29 +13,21 @@ const batchTaskSchema = z.object({
 
 const batchCodexArgsSchema = z.object({
   tasks: z.array(batchTaskSchema).min(1).describe('Array of atomic tasks to delegate to Codex'),
-  model: z
-    .string()
-    .optional()
-    .describe(
-      'Model ID. Recommended order: gpt-5.4 (default), gpt-5.3-codex (coding), gpt-5.2-codex, ' +
-        'gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini.'
-    ),
-  reasoningEffort: z
-    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
-    .optional()
-    .describe('Reasoning effort: none, minimal, low, medium, high, xhigh.'),
+  model: modelSchema,
+  reasoningEffort: reasoningEffortSchema,
   sandbox: z
-    .string()
+    .enum([
+      SANDBOX_MODES.READ_ONLY,
+      SANDBOX_MODES.WORKSPACE_WRITE,
+      SANDBOX_MODES.DANGER_FULL_ACCESS,
+    ])
     .default(SANDBOX_MODES.WORKSPACE_WRITE)
     .describe(`Sandbox mode: ${Object.values(SANDBOX_MODES).join(', ')}`),
   parallel: z.boolean().default(false).describe('Execute tasks in parallel (experimental)'),
   stopOnError: z.boolean().default(true).describe('Stop execution if any task fails'),
-  timeout: z.number().optional().describe('Maximum execution time per task in milliseconds'),
+  timeout: timeoutSchema,
   workingDir: z.string().optional().describe('Working directory for execution'),
-  search: z
-    .boolean()
-    .optional()
-    .describe('Enable web search for all tasks (activates web_search_request feature)'),
+  search: searchSchema,
   oss: z.boolean().optional().describe('Use local Ollama server'),
   enableFeatures: z.array(z.string()).optional().describe('Enable feature flags'),
   disableFeatures: z.array(z.string()).optional().describe('Disable feature flags'),

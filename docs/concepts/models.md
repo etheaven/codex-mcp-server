@@ -1,5 +1,9 @@
 # Model Selection
 
+::: warning Snapshot from March 2026
+The tables below are a historical snapshot and are no longer maintained. Since v1.4.0 the server accepts any model ID and reasoning level your Codex CLI supports. Call the `list-models` tool (it runs `codex debug models`) for the current list, or omit `model` to use the default from `~/.codex/config.toml`.
+:::
+
 The Codex MCP Tool provides access to OpenAI's latest models through the Codex CLI. Each model offers different capabilities, performance characteristics, and pricing. This guide covers all available models as of March 2026.
 
 ## Available Models

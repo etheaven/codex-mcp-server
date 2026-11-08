@@ -20,6 +20,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from './utils/logger.js';
 import { PROTOCOL, ToolArguments } from './constants.js';
+import { SERVER_VERSION } from './version.js';
 
 import {
   getToolDefinitions,
@@ -32,7 +33,7 @@ import {
 const server = new Server(
   {
     name: 'codex-cli-mcp',
-    version: '1.3.9',
+    version: SERVER_VERSION,
   },
   {
     capabilities: {

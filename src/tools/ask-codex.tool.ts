@@ -4,43 +4,25 @@ import { executeCodexCLI, executeCodex } from '../utils/codexExecutor.js';
 import { processChangeModeOutput } from '../utils/changeModeRunner.js';
 import { formatCodexResponseForMCP } from '../utils/outputParser.js';
 import { APPROVAL_POLICIES, ERROR_MESSAGES } from '../constants.js';
-
-// Model description for AI clients — MUST list exact valid model IDs
-const MODEL_DESCRIPTION = [
-  'Model ID to use. IMPORTANT: Use exact IDs listed below, do NOT invent or modify model names.',
-  'Recommended (use in this order): gpt-5.4 (default, best), gpt-5.3-codex (best coding),',
-  '  gpt-5.3-codex-spark (instant, Pro only), gpt-5.2-codex, gpt-5.2, gpt-5.1-codex-max,',
-  '  gpt-5.1-codex, gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano.',
-  'Large context (1M): gpt-4.1, gpt-4.1-mini, gpt-4.1-nano.',
-].join(' ');
-
-const REASONING_DESCRIPTION = [
-  'Reasoning effort level. Controls depth of internal reasoning.',
-  'Values: none, minimal, low, medium (default), high, xhigh.',
-  'Higher = deeper analysis but slower and more expensive.',
-  'Not all models support all levels.',
-  'gpt-5.4 supports: none/low/medium/high/xhigh.',
-  'gpt-5.3-codex supports: low/medium/high/xhigh.',
-  'o3/o4-mini support: low/medium/high.',
-].join(' ');
+import { modelSchema, reasoningEffortSchema, searchSchema, timeoutSchema } from './sharedSchema.js';
 
 const askCodexArgsSchema = z.object({
   prompt: z
     .string()
     .min(1)
     .describe("Task or question. Use @ to include files (e.g., '@largefile.ts explain')."),
-  model: z.string().optional().describe(MODEL_DESCRIPTION),
-  reasoningEffort: z
-    .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
-    .optional()
-    .describe(REASONING_DESCRIPTION),
+  model: modelSchema,
+  reasoningEffort: reasoningEffortSchema,
   sandbox: z
     .boolean()
     .default(false)
     .describe(
-      'Quick automation mode: enables workspace-write + on-failure approval. Alias for fullAuto.'
+      'Let Codex edit files in the working directory (sandbox workspace-write). Alias for fullAuto.'
     ),
-  fullAuto: z.boolean().optional().describe('Full automation mode'),
+  fullAuto: z
+    .boolean()
+    .optional()
+    .describe('Let Codex edit files in the working directory (sandbox workspace-write)'),
   approvalPolicy: z
     .enum(['never', 'on-request', 'on-failure', 'untrusted'])
     .optional()
@@ -80,23 +62,18 @@ const askCodexArgsSchema = z.object({
     .optional()
     .describe("Configuration overrides as 'key=value' string or object"),
   profile: z.string().optional().describe('Configuration profile to use from ~/.codex/config.toml'),
-  timeout: z.number().optional().describe('Maximum execution time in milliseconds (optional)'),
+  timeout: timeoutSchema,
   includeThinking: z
     .boolean()
     .default(true)
     .describe('Include reasoning/thinking section in response'),
   includeMetadata: z.boolean().default(true).describe('Include configuration metadata in response'),
-  search: z
-    .boolean()
-    .optional()
-    .describe(
-      'Enable web search by activating web_search_request feature flag. Requires network access - automatically sets sandbox to workspace-write if not specified.'
-    ),
+  search: searchSchema,
   oss: z
     .boolean()
     .optional()
     .describe(
-      'Use local Ollama server (convenience for -c model_provider=oss). Requires Ollama running locally. Automatically sets sandbox to workspace-write if not specified.'
+      'Use a local open-source model provider (Codex --oss, e.g. Ollama or LM Studio running locally).'
     ),
   enableFeatures: z
     .array(z.string())
@@ -111,7 +88,7 @@ const askCodexArgsSchema = z.object({
 export const askCodexTool: UnifiedTool = {
   name: 'ask-codex',
   description:
-    'Use OpenAI Codex to analyze, review, edit, or generate code. Call this tool whenever the user mentions "codex", "use codex", or wants to leverage OpenAI models (GPT-5.4, GPT-5.3-codex, etc.) for code tasks. Supports file references with @ syntax (e.g. @src/), model selection, reasoning effort control, and structured edits via changeMode.',
+    'Use OpenAI Codex to analyze, review, edit, or generate code. Call this tool whenever the user mentions "codex", "use codex", or wants a second opinion from OpenAI models on code. Supports file references with @ syntax (e.g. @src/), model selection (see list-models), reasoning effort, and structured edits via changeMode. Read-only by default; set sandbox: true to let Codex edit files. For reviewing git changes prefer the review tool.',
   zodSchema: askCodexArgsSchema,
   prompt: {
     description: 'Execute Codex CLI with optional changeMode',
@@ -204,9 +181,9 @@ export const askCodexTool: UnifiedTool = {
         return `❌ **Model Not Available**: ${errorMessage}
 
 **Solutions:**
-1. Try a different model: \`model: "gpt-5.3-codex"\` or \`model: "o3"\`
-2. If using ChatGPT account, some models require an API key instead
-3. Check available models: \`codex --help\``;
+1. Omit \`model\` to use your Codex default, or call the \`list-models\` tool for valid IDs
+2. Check \`reasoningEffort\` is one of the levels list-models shows for that model
+3. If using a ChatGPT account, some models require an API key instead`;
       }
 
       if (errorMessage.includes('Codex CLI not found') || errorMessage.includes('ENOENT')) {
@@ -233,9 +210,9 @@ Wait and retry, or check quota in OpenAI dashboard.`;
       }
 
       if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
-        return `❌ **Request Timeout**: Operation took longer than expected
+        return `❌ **Request Timeout**: ${errorMessage}
 
-Try increasing timeout or simplifying the request.`;
+Narrow the request, or raise \`timeout\` / CODEX_MCP_TIMEOUT_MS.`;
       }
 
       if (
@@ -246,9 +223,9 @@ Try increasing timeout or simplifying the request.`;
         return `❌ **Permission Error**: ${errorMessage}
 
 **Solutions:**
-- Use \`sandbox: true\` or \`fullAuto: true\` for automated mode
-- Use explicit \`sandboxMode: "workspace-write"\` with \`approvalPolicy: "on-failure"\`
-- Use \`yolo: true\` to bypass all safety`;
+- Use \`sandbox: true\` (workspace-write) so Codex can edit files in the working directory
+- Use \`sandboxMode: "danger-full-access"\` only if it must write outside the workspace
+- \`yolo: true\` bypasses all safety (only in externally sandboxed environments)`;
       }
 
       // Generic — always show the actual error

@@ -1,5 +1,11 @@
 import spawn from 'cross-spawn';
 import { Logger } from './logger.js';
+import { CLI, envInt } from '../constants.js';
+
+/** Default per-call timeout: CODEX_MCP_TIMEOUT_MS env var, else 10 minutes. */
+export function defaultTimeoutMs(): number {
+  return envInt(CLI.ENV_VARS.TIMEOUT_MS, CLI.DEFAULTS.TIMEOUT_MS);
+}
 
 export interface CommandResult {
   ok: boolean;
@@ -22,6 +28,8 @@ export interface ExecuteOptions {
   timeoutMs?: number;
   maxOutputBytes?: number;
   retry?: RetryOptions;
+  stdin?: string; // written to the child's stdin, then closed
+  cwd?: string;
 }
 
 /**
@@ -34,9 +42,11 @@ export async function executeCommandDetailed(
 ): Promise<CommandResult> {
   const {
     onProgress,
-    timeoutMs = 600000,
+    timeoutMs = defaultTimeoutMs(),
     maxOutputBytes = 50 * 1024 * 1024, // 50MB default
     retry,
+    stdin,
+    cwd,
   } = options;
 
   let attempt = 0;
@@ -48,6 +58,8 @@ export async function executeCommandDetailed(
       onProgress,
       timeoutMs,
       maxOutputBytes,
+      stdin,
+      cwd,
     });
 
     if (result.ok) {
@@ -77,7 +89,7 @@ export async function executeCommandDetailed(
 async function executeOnce(
   command: string,
   args: string[],
-  { onProgress, timeoutMs, maxOutputBytes }: Omit<ExecuteOptions, 'retry'>
+  { onProgress, timeoutMs, maxOutputBytes, stdin, cwd }: Omit<ExecuteOptions, 'retry'>
 ): Promise<CommandResult> {
   return new Promise(resolve => {
     const startTime = Date.now();
@@ -85,19 +97,28 @@ async function executeOnce(
 
     const childProcess = spawn(command, args, {
       env: process.env,
+      cwd,
       // cross-spawn automatically handles shell mode and .cmd extensions on Windows
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [stdin !== undefined ? 'pipe' : 'ignore', 'pipe', 'pipe'],
     });
+
+    if (stdin !== undefined && childProcess.stdin) {
+      // EPIPE here means the child exited early; its exit code/stderr explain why.
+      childProcess.stdin.on('error', err => Logger.debug('stdin write failed:', err));
+      childProcess.stdin.end(stdin, 'utf8');
+    }
 
     const stdoutChunks: Buffer[] = [];
     const stderrChunks: Buffer[] = [];
     let totalStdoutBytes = 0;
     let isResolved = false;
     let outputExceeded = false;
+    let killedByTimeout = false;
 
     // Set up timeout with SIGKILL fallback
     const timeoutId = setTimeout(() => {
       if (!isResolved) {
+        killedByTimeout = true;
         childProcess.kill('SIGTERM');
         Logger.warn(`Process timeout after ${timeoutMs}ms, sending SIGTERM`);
 
@@ -109,7 +130,7 @@ async function executeOnce(
           }
         }, 5000);
       }
-    }, timeoutMs || 600000);
+    }, timeoutMs || defaultTimeoutMs());
 
     childProcess.stdout?.on('data', (data: Buffer) => {
       // Check output size limit
@@ -179,7 +200,7 @@ async function executeOnce(
 
         const stdout = Buffer.concat(stdoutChunks).toString('utf8');
         const stderr = Buffer.concat(stderrChunks).toString('utf8');
-        const timedOut = signal === 'SIGTERM' || signal === 'SIGKILL';
+        const timedOut = killedByTimeout;
 
         Logger.commandComplete(startTime, code, stdout.length);
 
@@ -204,7 +225,7 @@ export async function executeCommand(
   command: string,
   args: string[],
   onProgress?: (newOutput: string) => void,
-  timeoutMs: number = 600000
+  timeoutMs: number = defaultTimeoutMs()
 ): Promise<string> {
   const result = await executeCommandDetailed(command, args, {
     onProgress,

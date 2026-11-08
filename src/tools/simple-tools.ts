@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { UnifiedTool } from './registry.js';
 import { executeCommand } from '../utils/commandExecutor.js';
+import { SERVER_VERSION } from '../version.js';
 
 const pingArgsSchema = z.object({
   prompt: z.string().default('').describe('Message to echo '),
@@ -56,13 +57,13 @@ export const versionTool: UnifiedTool = {
 - Codex CLI: ${codexVersion.trim()}
 - Node.js: ${nodeVersion}
 - Platform: ${platform}
-- MCP Server: @etheaven/codex-mcp-server v1.2.5`;
+- MCP Server: @etheaven/codex-mcp-server v${SERVER_VERSION}`;
     } catch (error) {
       return `**System Information:**
 - Codex CLI: Not installed or not accessible
 - Node.js: ${process.version}
 - Platform: ${process.platform}
-- MCP Server: @etheaven/codex-mcp-server v1.2.4
+- MCP Server: @etheaven/codex-mcp-server v${SERVER_VERSION}
 
 *Note: Install Codex CLI with: npm install -g @openai/codex*`;
     }

@@ -12,7 +12,7 @@
 
 Codex MCP Tool is an open‑source Model Context Protocol (MCP) server that connects your IDE or AI assistant (Claude, Cursor, etc.) to the Codex CLI. It enables non‑interactive automation with `codex exec`, safe sandboxed edits with approvals, and large‑scale code analysis via `@` file references. Built for reliability and speed, it streams progress updates, supports structured change mode (OLD/NEW patch output), and integrates cleanly with standard MCP clients for code review, refactoring, documentation, and CI automation.
 
-> **Latest Release (v1.3.8)**: Fixed empty `ask-codex` responses, improved Codex CLI transcript parsing, and repaired release packaging so npm/marketplace updates publish correctly. [See changelog](#recent-updates)
+> **Latest Release (v1.4.0)**: Works with current Codex CLI (tested on 0.153): fixes `sandbox`/`fullAuto` calls broken by the removed `--full-auto` flag, adds a `review` tool for git changes and a `list-models` tool, and no longer pins a frozen model list. [See changelog](#recent-updates)
 
 - Ask Codex questions from your MCP client, or brainstorm ideas programmatically.
 
@@ -33,24 +33,56 @@ Before using this tool, ensure you have:
 
 > **✅ Cross-Platform Support**: Fully tested and working on Windows, macOS, and Linux (v1.2.4+)
 
-### Install via Claude Code Marketplace (Recommended)
+Check the CLI works on its own first: `codex --version` and `codex exec "say hi"`.
 
-In Claude Code, run:
+### Claude Code: plugin (recommended)
+
+This repository is its own Claude Code plugin marketplace (self-hosted; it is not listed in Anthropic's official marketplace). In Claude Code, run:
 
 ```
 /plugin marketplace add etheaven/codex-mcp-server
 /plugin install codex-mcp-server@codex-mcp-server
 ```
 
-### Alternative: CLI Setup
+### Claude Code: plain MCP server
 
 ```bash
 claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
 ```
 
+### Cursor
+
+Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per project):
+
+```json
+{
+  "mcpServers": {
+    "codex-cli": {
+      "command": "npx",
+      "args": ["-y", "@etheaven/codex-mcp-server"]
+    }
+  }
+}
+```
+
+### Other MCP clients
+
+Any client that launches stdio MCP servers works: the command is `npx -y @etheaven/codex-mcp-server` (or `codex-mcp` after a global install).
+
 ### Verify Installation
 
-Type `/mcp` inside Claude Code to verify the Codex MCP is active.
+Type `/mcp` inside Claude Code (or open Cursor's MCP settings) and check the server is connected. Then ask: "use codex list-models".
+
+### Environment Variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `CODEX_MCP_CWD` | client working dir | Directory Codex runs in when a call does not pass `workingDir` |
+| `CODEX_MCP_TIMEOUT_MS` | `600000` (10 min) | Default per-call timeout; a call's `timeout` argument overrides it |
+| `CODEX_MCP_MAX_RESPONSE_CHARS` | `16000` | Responses longer than this are truncated so they do not flood the client's context |
+| `MCP_TOOL_TIMEOUT` | client-specific | Claude Code's own MCP tool timeout; raise it together with `CODEX_MCP_TIMEOUT_MS` for long tasks |
+
+Example: `claude mcp add codex-cli -e CODEX_MCP_TIMEOUT_MS=1800000 -- npx -y @etheaven/codex-mcp-server`
 
 ---
 
@@ -89,30 +121,24 @@ After updating configuration, restart your terminal session.
 ## Example Workflow
 
 - Natural language: "use codex to explain index.html", "understand this repo with @src", "look for vulnerabilities and suggest fixes"
-- Claude Code: Type `/codex-cli` to access the MCP server tools.
+- "use codex to review my uncommitted changes", "have codex review this branch against main"
+- Claude Code: the server's prompts also appear in the `/` slash-command menu.
 
 ## Usage Examples
 
 ### Model Selection
 
+By default Codex uses the `model` and `model_reasoning_effort` from your `~/.codex/config.toml`, which is usually what you want. OpenAI changes the model lineup often, so this server does not hard-code model names: any `model` string is passed to Codex as-is. To see what your Codex install supports, call the `list-models` tool (it wraps `codex debug models`):
+
 ```javascript
-// Use the default model (gpt-5.4)
+// Use your configured default model
 'explain the architecture of @src/';
 
-// Use gpt-5.3-codex for complex coding tasks
-'use codex with model gpt-5.3-codex to refactor @legacy-code.js';
+// Ask which models and reasoning levels are available
+'use codex list-models';
 
-// Use gpt-5.4 with high reasoning for deep analysis
-'use codex with model gpt-5.4 and reasoning high to analyze complex algorithm in @algorithm.py';
-
-// Use o4-mini for quick tasks
-'use codex with model o4-mini to add comments to @utils.js';
-
-// Use o3 for deep reasoning
-'use codex with model o3 to design microservices architecture for @requirements.md';
-
-// Use gpt-5-mini for cost-effective tasks
-'use codex with model gpt-5-mini to summarize @README.md';
+// Pick one explicitly, with a reasoning level that model supports
+'use codex with model <id from list-models> and reasoning high to analyze @algorithm.py';
 ```
 
 ### With File References (using @ syntax)
@@ -140,15 +166,15 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 
 **The `sandbox` Parameter (Convenience Flag):**
 
-- `sandbox: true` → Enables **fullAuto** mode (equivalent to `fullAuto: true`)
-- `sandbox: false` (default) → Does **NOT** disable sandboxing, just doesn't enable auto mode
-- **Important:** The `sandbox` parameter is a convenience flag, not a security control
+- `sandbox: true` → same as `fullAuto: true`: runs Codex with `--sandbox workspace-write` so it can edit files in the working directory
+- `sandbox: false` (default) → Codex uses the sandbox from your config, which is `read-only` unless you changed it
+- Codex CLI removed its `--full-auto` flag; since v1.4.0 this server maps `fullAuto` to `--sandbox workspace-write` instead
 
 **Granular Control Parameters:**
 
 - `sandboxMode`: Controls file system access level
-- `approvalPolicy`: Controls when user approval is required
-- `fullAuto`: Shorthand for `sandboxMode: "workspace-write"` + `approvalPolicy: "on-failure"`
+- `approvalPolicy`: Controls when user approval is required (`codex exec` is non-interactive, so in practice commands either run or fail)
+- `fullAuto`: Shorthand for `sandboxMode: "workspace-write"`
 - `yolo`: ⚠️ Bypasses all safety checks (dangerous, not recommended)
 
 #### Sandbox Modes
@@ -164,9 +190,9 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 | Policy        | Description                      | When to Use                         |
 | ------------- | -------------------------------- | ----------------------------------- |
 | `never`       | No approvals required            | Fully trusted automation            |
-| `on-request`  | Ask before every action          | Maximum control, manual review      |
-| `on-failure`  | Only ask when operations fail    | Balanced automation (recommended)   |
-| `untrusted`   | Maximum paranoia mode            | Untrusted code or high-risk changes |
+| `on-request`  | The model decides when to ask    | Default in recent Codex CLI         |
+| `on-failure`  | Legacy; still accepted by Codex  | Older configs                       |
+| `untrusted`   | Legacy; still accepted by Codex  | Older configs                       |
 
 #### Configuration Examples
 
@@ -174,9 +200,8 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 
 ```javascript
 {
-  "approvalPolicy": "on-failure",
+  "approvalPolicy": "never",
   "sandboxMode": "workspace-write",  // Auto-set if omitted in v1.2+
-  "model": "gpt-5.4",
   "prompt": "refactor @src/utils for better performance"
 }
 ```
@@ -185,8 +210,7 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 
 ```javascript
 {
-  "sandbox": true,  // Equivalent to fullAuto: true
-  "model": "gpt-5.4",
+  "sandbox": true,  // Equivalent to fullAuto: true (workspace-write)
   "prompt": "fix type errors in @src/"
 }
 ```
@@ -196,7 +220,6 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 ```javascript
 {
   "sandboxMode": "read-only",
-  "model": "gpt-5.4",
   "prompt": "analyze @src/ and explain the architecture"
 }
 ```
@@ -206,8 +229,9 @@ Codex CLI supports fine-grained control over permissions and approvals through s
 Starting from version 1.2.0, the server automatically applies intelligent defaults to prevent permission errors:
 
 - ✅ If `approvalPolicy` is set but `sandboxMode` is not → auto-sets `sandboxMode: "workspace-write"`
-- ✅ If `search: true` or `oss: true` → auto-sets `sandboxMode: "workspace-write"` (for network access)
+- ✅ `search: true` uses Codex's `--search` flag (live web search) and no longer changes the sandbox (v1.4.0)
 - ✅ All commands include `--skip-git-repo-check` to prevent errors in non-git environments
+- ✅ Prompts are sent on stdin, so very large prompts no longer hit OS command-line limits (v1.4.0)
 
 #### Troubleshooting Permission Errors
 
@@ -219,7 +243,7 @@ If you encounter `❌ Permission Error: Operation blocked by sandbox policy`:
 # Ensure you're not using read-only mode for write operations
 {
   "sandboxMode": "workspace-write",  // Not "read-only"
-  "approvalPolicy": "on-failure"
+  "approvalPolicy": "never"
 }
 ```
 
@@ -247,14 +271,17 @@ npm install -g @etheaven/codex-mcp-server@latest
 If you encounter timeout errors when using Codex MCP tools:
 
 ```bash
-# Set the MCP tool timeout environment variable (in milliseconds)
-export MCP_TOOL_TIMEOUT=36000000  # 10 hours
+# Claude Code's MCP tool timeout (in milliseconds)
+export MCP_TOOL_TIMEOUT=1800000  # 30 minutes
+
+# This server's own per-call timeout (default 10 minutes)
+export CODEX_MCP_TIMEOUT_MS=1800000
 
 # For Windows (PowerShell):
-$env:MCP_TOOL_TIMEOUT=36000000
+$env:MCP_TOOL_TIMEOUT=1800000
 
 # For Windows (CMD):
-set MCP_TOOL_TIMEOUT=36000000
+set MCP_TOOL_TIMEOUT=1800000
 ```
 
 Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, or PowerShell profile) to make it permanent.
@@ -266,15 +293,14 @@ If Codex responds with permission errors like "Operation blocked by sandbox poli
 Create or edit `~/.codex/config.toml`:
 
 ```toml
-# Dynamically generated Codex configuration
-model = "gpt-5.4"
-model_reasoning_effort = "high"
-model_reasoning_summary = "detailed"
 approval_policy = "never"
-sandbox_mode = "danger-full-access"
-disable_response_storage = true
-network_access = true
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true   # only if Codex must reach the network from its shell
 ```
+
+Only switch to `sandbox_mode = "danger-full-access"` if Codex must write outside the workspace.
 
 **⚠️ Security Warning**: The `danger-full-access` mode grants Codex full file system access. Only use this configuration in trusted environments and for tasks you fully understand.
 
@@ -315,20 +341,19 @@ These tools are designed to be used by the AI assistant.
 
 - **`ask-codex`**: Sends a prompt to Codex via `codex exec`.
   - Supports `@` file references for including file content
-  - Optional `model` parameter — recommended models:
-    - `gpt-5.4` (default, latest flagship)
-    - `gpt-5.3-codex` (best for complex coding)
-    - `gpt-5.3-codex-spark` (instant coding, Pro only)
-    - `o3` (deep reasoning)
-    - `o4-mini` (fast & efficient)
-    - `gpt-5-mini` (cost-effective)
-    - `gpt-4.1` (1M context, no reasoning)
-    - See [full model list](docs/concepts/models.md)
-  - Optional `reasoningEffort` parameter: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`
-  - `sandbox=true` enables `--full-auto` mode
+  - Optional `model`: any ID your Codex CLI accepts; omit it to use your config default (see `list-models`)
+  - Optional `reasoningEffort`: e.g. `low`, `medium`, `high`, `xhigh`, `max` (per-model support, see `list-models`)
+  - `sandbox=true` lets Codex edit files (`--sandbox workspace-write`)
   - `changeMode=true` returns structured OLD/NEW edits
   - Supports approval policies and sandbox modes
   - **Automatically includes `--skip-git-repo-check`** to prevent permission errors in non-git environments
+
+- **`review`**: Runs `codex review` on git changes and returns prioritized findings with `file:line` references.
+  - One target: `uncommitted: true`, `base: "main"` or `commit: "<sha>"`
+  - Or free-form `prompt` instructions with no target (Codex CLI does not accept both)
+  - `workingDir` picks the repository; read-only
+
+- **`list-models`**: Lists the models and reasoning levels the installed Codex CLI supports (`codex debug models`).
 
 - **`brainstorm`**: Generate novel ideas with structured methodologies.
   - Multiple frameworks: divergent, convergent, SCAMPER, design-thinking, lateral
@@ -367,6 +392,29 @@ You can use these commands directly in Claude Code's interface (compatibility wi
   - **`message`** (optional): A message to echo back.
 
 ## Recent Updates
+
+### v1.4.0 (2026-11-08)
+
+**🐛 Fixes for current Codex CLI (tested on 0.153.4):**
+- `sandbox: true` / `fullAuto: true` failed with `unexpected argument '--full-auto'`; now mapped to `--sandbox workspace-write`
+- `search: true` now uses Codex's `--search` flag instead of the deprecated `web_search_request` feature, and no longer forces a writable sandbox
+- Prompts are sent on stdin; `brainstorm` prompts over 100 KB were previously passed to Codex as a literal `< /tmp/file` string
+- `image` attachments: Codex's greedy `-i` swallowed the `exec` subcommand, so image calls did not run `codex exec`
+- `config` objects become one `-c key=value` per entry (they were joined into a single invalid `-c`)
+- Timeouts are reported only for real timeouts (an output-size kill was misreported as a timeout)
+
+**✨ New:**
+- `review` tool for `codex review` (uncommitted changes, branch vs base, single commit), based on the idea in upstream PR cexll/codex-mcp-server#6
+- `list-models` tool; `model` and `reasoningEffort` are free-form, so new models and levels such as `max` work without a server release
+- `CODEX_MCP_TIMEOUT_MS` and `CODEX_MCP_MAX_RESPONSE_CHARS` environment variables
+- Clearer errors: unsupported model/effort, CLI flag mismatches, and timeouts say what to change
+- Server and `version` tool report the real package version (the `version` tool said v1.2.5)
+- First real test suite (`npm test`, 23 tests), now required in CI and release
+
+### v1.3.9 (2026-04-01)
+
+- Truncate responses above 16k characters so oversized results do not break Claude Code
+- Concise-response instruction added to every `ask-codex` call
 
 ### v1.3.8 (2026-03-30)
 
@@ -455,7 +503,7 @@ You can use these commands directly in Claude Code's interface (compatibility wi
 
 **Minimum Requirements:**
 - Node.js v18.0.0 or higher
-- Codex CLI installed and authenticated (`npm install -g @openai/codex`)
+- Codex CLI installed and authenticated (`npm install -g @openai/codex`); v1.4.0 is tested against Codex CLI 0.153
 
 ## Acknowledgments
 
