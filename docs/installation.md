@@ -21,7 +21,7 @@ No installation needed - runs directly:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@etheaven/codex-mcp-server"]
+      "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"]
     }
   }
 }
@@ -38,7 +38,7 @@ claude mcp add codex-cli --npm-package @etheaven/codex-mcp-server
 ### Install globally
 
 ```bash
-npm install -g @etheaven/codex-mcp-server
+npm install -g https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz
 ```
 
 ### Claude Desktop Configuration

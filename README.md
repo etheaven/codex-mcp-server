@@ -47,8 +47,10 @@ This repository is its own Claude Code plugin marketplace (self-hosted; it is no
 ### Claude Code: plain MCP server
 
 ```bash
-claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
+claude mcp add codex-cli -- npx -y https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz
 ```
+
+The commands here install from the [GitHub release](https://github.com/etheaven/codex-mcp-server/releases). The npm package `@etheaven/codex-mcp-server` can lag behind (npm still serves 1.3.9, which breaks on Codex CLI 0.153 and newer); use the release URL until npm shows the same version.
 
 ### Cursor
 
@@ -59,7 +61,7 @@ Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per project):
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@etheaven/codex-mcp-server"]
+      "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"]
     }
   }
 }
@@ -67,7 +69,7 @@ Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per project):
 
 ### Other MCP clients
 
-Any client that launches stdio MCP servers works: the command is `npx -y @etheaven/codex-mcp-server` (or `codex-mcp` after a global install).
+Any client that launches stdio MCP servers works: the command is `npx -y https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz` (or `codex-mcp` after a global install).
 
 ### Verify Installation
 
@@ -82,7 +84,7 @@ Type `/mcp` inside Claude Code (or open Cursor's MCP settings) and check the ser
 | `CODEX_MCP_MAX_RESPONSE_CHARS` | `16000` | Responses longer than this are truncated so they do not flood the client's context |
 | `MCP_TOOL_TIMEOUT` | client-specific | Claude Code's own MCP tool timeout; raise it together with `CODEX_MCP_TIMEOUT_MS` for long tasks |
 
-Example: `claude mcp add codex-cli -e CODEX_MCP_TIMEOUT_MS=1800000 -- npx -y @etheaven/codex-mcp-server`
+Example: `claude mcp add codex-cli -e CODEX_MCP_TIMEOUT_MS=1800000 -- npx -y https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz`
 
 ---
 
@@ -97,7 +99,7 @@ Add to your Claude Desktop config file:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@etheaven/codex-mcp-server"]
+      "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"]
     }
   }
 }
@@ -111,7 +113,7 @@ Add to your Claude Desktop config file:
 ### Global Installation
 
 ```bash
-npm install -g @etheaven/codex-mcp-server
+npm install -g https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz
 ```
 
 Then use `"command": "codex-mcp"` instead of the npx approach.
@@ -260,8 +262,8 @@ If you encounter `❌ Permission Error: Operation blocked by sandbox policy`:
 **Check 3: Update to latest version**
 
 ```bash
-# v1.2+ includes smart defaults to prevent permission errors
-npm install -g @etheaven/codex-mcp-server@latest
+# install the newest GitHub release (see https://github.com/etheaven/codex-mcp-server/releases)
+npm install -g https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz
 ```
 
 #### Common Issues

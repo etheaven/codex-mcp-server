@@ -14,6 +14,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write # npm trusted publishing (OIDC), no long-lived NPM_TOKEN needed
 
 jobs:
   publish:
@@ -28,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24" # npm >= 11.5 for trusted publishing
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
@@ -58,42 +59,45 @@ jobs:
           echo "✅ Build output verified"
 
       - name: Create tarball and check size
+        id: pack
         run: |
-          npm pack --dry-run
-          SIZE=$(npm pack --json | jq '.[0].size')
-          echo "📦 Package size: $SIZE bytes"
+          TARBALL=$(npm pack --json | jq -r '.[0].filename')
+          SIZE=$(stat -c %s "$TARBALL")
+          echo "📦 $TARBALL: $SIZE bytes"
           if [ $SIZE -gt 10485760 ]; then
             echo "⚠️ Warning: Package size exceeds 10MB"
           fi
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
 
-      - name: Publish to npm
-        run: |
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+      # The GitHub release (with the installable tarball) is created first, so the
+      # release is usable via `npx -y <tarball URL>` even if npm publishing fails.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          files: ${{ steps.pack.outputs.tarball }}
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
           body: |
-            ## 🚀 Codex MCP Tool Release
-
             ### Installation
             ```bash
             # Claude Code
-            claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
+            claude mcp add codex-cli -- npx -y https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.pack.outputs.tarball }}
 
-            # Claude Desktop
-            npm install -g @etheaven/codex-mcp-server
+            # Claude Code plugin (self-hosted marketplace)
+            /plugin marketplace add ${{ github.repository }}
+            /plugin install codex-mcp-server@codex-mcp-server
             ```
 
-            ### What's Changed
-            See below for the full changelog.
+            Requires Codex CLI (`npm install -g @openai/codex`).
 
-            ### Links
-            - 📦 [NPM Package](https://www.npmjs.com/package/@etheaven/codex-mcp-server)
-            - 📖 [Documentation](https://etheaven.github.io/codex-mcp-server/)
-            - 🐛 [Report Issues](https://github.com/etheaven/codex-mcp-server/issues)
+      - name: Publish to npm
+        run: |
+          # Uses npm trusted publishing (OIDC) when it is configured for this repo
+          # on npmjs.com; otherwise falls back to the NPM_TOKEN secret.
+          if ! npm publish --access public; then
+            echo "::error::npm publish failed. If it is E404/E401, the npm token is missing or expired. Fix once: npmjs.com > @etheaven/codex-mcp-server > Settings > Trusted Publisher > GitHub Actions (repo ${{ github.repository }}, workflow release.yml). The GitHub release above is already live."
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

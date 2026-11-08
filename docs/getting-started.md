@@ -43,7 +43,7 @@ Claude Code offers the smoothest experience.
 
 ```bash
 # install for Claude Code
-claude mcp add codex-cli -- npx -y @etheaven/codex-mcp-server
+claude mcp add codex-cli -- npx -y https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz
 
 # Start Claude Code - it's automatically configured!
 claude
@@ -74,7 +74,7 @@ For Claude Desktop users, add this to your configuration file:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@etheaven/codex-mcp-server"]
+      "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"]
     }
   }
 }
@@ -95,7 +95,7 @@ Codex MCP Tool works with 40+ MCP clients! Here are the common configuration pat
   "transport": {
     "type": "stdio",
     "command": "npx",
-    "args": ["-y", "@etheaven/codex-mcp-server"]
+    "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"]
   }
 }
 ```
@@ -111,7 +111,7 @@ Codex MCP Tool works with 40+ MCP clients! Here are the common configuration pat
 {
   "codex-cli": {
     "command": "npx",
-    "args": ["-y", "@etheaven/codex-mcp-server"],
+    "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"],
     "env": {},
     "working_directory": null,
     "start_on_launch": true

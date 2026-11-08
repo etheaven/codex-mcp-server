@@ -2,7 +2,7 @@
   "mcpServers": {
     "codex": {
       "command": "npx",
-      "args": ["-y", "@etheaven/codex-mcp-server"]
+      "args": ["-y", "https://github.com/etheaven/codex-mcp-server/releases/download/v1.4.0/etheaven-codex-mcp-server-1.4.0.tgz"]
     }
   }
 }
